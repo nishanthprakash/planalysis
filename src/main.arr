@@ -106,17 +106,8 @@ modify-functions = A.default-map-visitor.{
       blocky)
   end,
 
-  method s-block(self, l, stmts):
-    fun addprint(x, acc):
-      cases (A.Expr) x:
-        | A.s-app =>
-          
-        | else => link(x, acc)
-    end
-
-    stmts.foldr((lam(x, acc): if x == 6: link(62, link(61, link(x, acc))) else: link(x, acc) end end), empty)
-
-    s-block(l, stmts.map(_.visit(self)))
+  method s-app(self, l :: Loc, _fun :: Expr, args :: List<Expr>):
+    s-app(l, _fun.visit(self), args.map(_.visit(self)))
   end
 }
 
