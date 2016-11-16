@@ -91,7 +91,6 @@ fun replace-where(wblock, fname):
   whrblock
 end
 
-# This simple traversal makes every function have return type String
 modify-functions = A.default-map-visitor.{
   method s-fun(self, l, name, params, args, ann, doc, body, where-block, blocky):
     A.s-fun(
@@ -107,7 +106,56 @@ modify-functions = A.default-map-visitor.{
   end,
 
   method s-app(self, l :: Loc, _fun :: Expr, args :: List<Expr>):
-    s-app(l, _fun.visit(self), args.map(_.visit(self)))
+    #s-app(l, _fun.visit(self), args.map(_.visit(self)))
+
+    let-args = args.foldr(
+      lam(x, y):
+        cases List y:
+	  | empty => link(s-let(l, s-bind(l, false, "_f__in_" + num-to-string(1), a-blank), x.visit(self), false), y)
+          | link (first, rest) => 
+            arg-name = "_f__in_" + number-to-string(string-to-number(string-substring(first.b.id, 7, string-length(first.b.id))) + 1)
+            link(s-let(l, s-bind(l, false, arg-name, a-blank), x.visit(self), false), y)  
+        end
+      end, empty)
+
+    list-argids = args.foldr(
+      lam(_, y):
+        cases List y:
+	  | empty => link(s-id(l, "_f__in_"), y)
+          | link (first, rest) =>
+            arg-name = "_f__in_" + number-to-string(string-to-number(string-substring(first.b.id, 7, string-length(first.b.id))) + 1)
+            link(s-let(l, arg-name), y)  
+        end
+      end, empty)
+
+    
+    in-and-out = (link( 
+      s-let(l, 
+        s-bind(l, false, "_f__out", a-blank), 
+        s-app(l, 
+          _fun.visit(self), 
+          list-argids), false), 
+      let-args.reverse())).reverse()
+
+    print-temp = in-and-out.foldl(
+      lam(x, y):
+        cases List y:
+	  | empty => s-op(l, l, op+, s-str(l, '{"f":['), s-app(l, s-id(l, num-to-string), [list: s-id(l, "_f__in_1")]))
+          | link (first, rest) =>
+            arg-name = x.b.id
+            s-op(l, l, op+, s-op(l, l, op+, y, s-str(l, ', ')), s-app(l, s-id(l, num-to-string), [list: s-id(l, arg-name)]))
+        end
+      end, empty)
+
+    printargs-anf = s-op(l, l, op+, print-temp, s-str(l, ']}')
+
+    print-app = s-app(l, s-id(l, print), link(printargs-anf, empty))
+
+    block-out = s-id(l, "_f__out")
+
+    anf-complete = (link(block-out, link(print-app, in-and-out.reverse())).reverse()
+
+    s-user-block(l, s-block(l, anf-complete))
   end
 }
 
