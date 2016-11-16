@@ -91,6 +91,8 @@ fun replace-where(wblock, fname):
   whrblock
 end
 
+var function-counter = 0
+
 modify-functions = A.default-map-visitor.{
   method s-fun(self, l, name, params, args, ann, doc, body, where-block, blocky):
     A.s-fun(
@@ -107,62 +109,74 @@ modify-functions = A.default-map-visitor.{
 
   method s-app(self, l, _fun, args):
     #s-app(l, _fun.visit(self), args.map(_.visit(self)))
+    block:
+      function-counter := function-counter + 1
 
-    let-args = args.foldr(
-      lam(x, y):
-        cases(List) y:
-          | empty => link(A.s-let(l, A.s-bind(l, false, A.s-name(l,  "_f__in_1"), A.a-blank), x.visit(self), false), y)
-          | link(first, rest) => 
-            in-index = string-to-number(string-substring(first.name.id.s, 7, string-length(first.name.id.s))).value + 1
-            arg-name = "_f__in_" + num-to-string(in-index)
-            link(A.s-let(l, A.s-bind(l, false, A.s-name(l, arg-name), A.a-blank), x.visit(self), false), y)  
-        end
-      end, empty)
+      f-str = "f" + num-to-string(function-counter)
+      fs-len = string-length(f-str)
 
-    list-argids = args.foldr(
-      lam(_, y):
-        cases(List) y:
-          | empty => link(A.s-id(l, A.s-name(l, "_f__in_1")), y)
-          | link(first, rest) => 
-            in-index = string-to-number(string-substring(first.id.s, 7, string-length(first.id.s))).value + 1
-            arg-name = "_f__in_" + num-to-string(in-index)
-            link(A.s-id(l, A.s-name(l, arg-name)), y)  
-        end
-      end, empty)
+      let-args = args.foldr(
+        lam(x, y):
+          cases(List) y:
+            | empty => link(A.s-let(l, A.s-bind(l, false, A.s-name(l,  "_" + f-str + "__in_1"), A.a-blank), x.visit(self), false), y)
+            | link(first, rest) => 
+              in-index = string-to-number(string-substring(first.name.id.s, 6 + fs-len, string-length(first.name.id.s))).value + 1
+              arg-name = "_" + f-str + "__in_" + num-to-string(in-index)
+              link(A.s-let(l, A.s-bind(l, false, A.s-name(l, arg-name), A.a-blank), x.visit(self), false), y)  
+          end
+        end, empty)
+
+      list-argids = args.foldr(
+        lam(_, y):
+          cases(List) y:
+            | empty => link(A.s-id(l, A.s-name(l, "_" + f-str + "__in_1")), y)
+            | link(first, rest) => 
+              in-index = string-to-number(string-substring(first.id.s, 6 + fs-len, string-length(first.id.s))).value + 1
+              arg-name = "_" + f-str + "__in_" + num-to-string(in-index)
+              link(A.s-id(l, A.s-name(l, arg-name)), y)  
+          end
+        end, empty)
 
 
-    in-and-out = (link( 
-        A.s-let(l, 
-          A.s-bind(l, false, A.s-name(l, "_f__out"), A.a-blank), 
-          A.s-app(l, 
-            _fun.visit(self), 
-            list-argids), false), 
-        let-args.reverse())).reverse()
+      in-and-out = (link( 
+          A.s-let(l, 
+            A.s-bind(l, false, A.s-name(l, "_" + f-str + "__out"), A.a-blank), 
+            A.s-app(l, 
+              _fun.visit(self), 
+              list-argids), false), 
+          let-args.reverse())).reverse()
 
-    print-temp = in-and-out.foldl(
-      lam(x, y):
-        if is-empty(y):
-          A.s-op(l, l, "op+", A.s-str(l, '{"f":['), A.s-app(l, A.s-id(l, A.s-name(l, "num-to-string")), [list: A.s-id(l, A.s-name(l, "_f__in_1"))]))
-        else:
-            arg-name = if string-equal(string-substring(x.name.id.s, 4, 6), "in"):
-              in-index = string-to-number(string-substring(x.name.id.s, 7, string-length(x.name.id.s))).value + 1
-              num-to-string(in-index)
+      # At the time of printing if we have evaluated the fn to have a fn name then replace f-str with the function name?
+      print-temp = in-and-out.foldl(
+        lam(x, y):
+          if is-empty(y):
+            arg-name = if string-equal(string-substring(x.name.id.s, 3 + fs-len, 5 + fs-len), "in"):
+              "_" + f-str + "__in_1"
             else:
-              "_f__out"
+              "_" + f-str + "__out"
+            end
+            A.s-op(l, l, "op+", A.s-str(l, '{"' + f-str + '":['), A.s-app(l, A.s-id(l, A.s-name(l, "num-to-string")), [list: A.s-id(l, A.s-name(l, arg-name))]))
+          else:
+            arg-name = if string-equal(string-substring(x.name.id.s, 3 + fs-len, 5 + fs-len), "in"):
+              in-index = string-to-number(string-substring(x.name.id.s, 6 + fs-len, string-length(x.name.id.s))).value + 1
+              "_" + f-str + "__in_" + num-to-string(in-index)
+            else:
+              "_" + f-str + "__out"
             end
             A.s-op(l, l, "op+", A.s-op(l, l, "op+", y, A.s-str(l, ', ')), A.s-app(l, A.s-id(l, A.s-name(l, "num-to-string")), [list: A.s-id(l,  A.s-name(l, arg-name))]))
-        end
-      end, empty)
+          end
+        end, empty)
 
-    printargs-anf = A.s-op(l, l, "op+", print-temp, A.s-str(l, ']}'))
+      printargs-anf = A.s-op(l, l, "op+", print-temp, A.s-str(l, ']}'))
 
-    print-app = A.s-app(l, A.s-id(l, A.s-name(l, "print")), link(printargs-anf, empty))
+      print-app = A.s-app(l, A.s-id(l, A.s-name(l, "print")), link(printargs-anf, empty))
 
-    block-out = A.s-id(l, A.s-name(l, "_f__out"))
+      block-out = A.s-id(l, A.s-name(l, "_" + f-str + "__out"))
 
-    anf-complete = (link(block-out, link(print-app, in-and-out.reverse())).reverse())
+      anf-complete = (link(block-out, link(print-app, in-and-out.reverse())).reverse())
 
-    A.s-user-block(l, A.s-block(l, anf-complete))
+      A.s-user-block(l, A.s-block(l, anf-complete))
+    end
   end
 }
 
