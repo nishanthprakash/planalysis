@@ -105,57 +105,64 @@ modify-functions = A.default-map-visitor.{
       blocky)
   end,
 
-  method s-app(self, l :: Loc, _fun :: Expr, args :: List<Expr>):
+  method s-app(self, l, _fun, args):
     #s-app(l, _fun.visit(self), args.map(_.visit(self)))
 
     let-args = args.foldr(
       lam(x, y):
-        cases List y:
-	  | empty => link(s-let(l, s-bind(l, false, "_f__in_" + num-to-string(1), a-blank), x.visit(self), false), y)
-          | link (first, rest) => 
-            arg-name = "_f__in_" + number-to-string(string-to-number(string-substring(first.b.id, 7, string-length(first.b.id))) + 1)
-            link(s-let(l, s-bind(l, false, arg-name, a-blank), x.visit(self), false), y)  
+        cases(List) y:
+          | empty => link(A.s-let(l, A.s-bind(l, false, A.s-name(l,  "_f__in_1"), A.a-blank), x.visit(self), false), y)
+          | link(first, rest) => 
+            in-index = string-to-number(string-substring(first.name.id.s, 7, string-length(first.name.id.s))).value + 1
+            arg-name = "_f__in_" + num-to-string(in-index)
+            link(A.s-let(l, A.s-bind(l, false, A.s-name(l, arg-name), A.a-blank), x.visit(self), false), y)  
         end
       end, empty)
 
     list-argids = args.foldr(
       lam(_, y):
-        cases List y:
-	  | empty => link(s-id(l, "_f__in_"), y)
-          | link (first, rest) =>
-            arg-name = "_f__in_" + number-to-string(string-to-number(string-substring(first.b.id, 7, string-length(first.b.id))) + 1)
-            link(s-let(l, arg-name), y)  
+        cases(List) y:
+          | empty => link(A.s-id(l, A.s-name(l, "_f__in_1")), y)
+          | link(first, rest) => 
+            in-index = string-to-number(string-substring(first.id.s, 7, string-length(first.id.s))).value + 1
+            arg-name = "_f__in_" + num-to-string(in-index)
+            link(A.s-id(l, A.s-name(l, arg-name)), y)  
         end
       end, empty)
 
-    
+
     in-and-out = (link( 
-      s-let(l, 
-        s-bind(l, false, "_f__out", a-blank), 
-        s-app(l, 
-          _fun.visit(self), 
-          list-argids), false), 
-      let-args.reverse())).reverse()
+        A.s-let(l, 
+          A.s-bind(l, false, A.s-name(l, "_f__out"), A.a-blank), 
+          A.s-app(l, 
+            _fun.visit(self), 
+            list-argids), false), 
+        let-args.reverse())).reverse()
 
     print-temp = in-and-out.foldl(
       lam(x, y):
-        cases List y:
-	  | empty => s-op(l, l, op+, s-str(l, '{"f":['), s-app(l, s-id(l, num-to-string), [list: s-id(l, "_f__in_1")]))
-          | link (first, rest) =>
-            arg-name = x.b.id
-            s-op(l, l, op+, s-op(l, l, op+, y, s-str(l, ', ')), s-app(l, s-id(l, num-to-string), [list: s-id(l, arg-name)]))
+        if is-empty(y):
+          A.s-op(l, l, "op+", A.s-str(l, '{"f":['), A.s-app(l, A.s-id(l, A.s-name(l, "num-to-string")), [list: A.s-id(l, A.s-name(l, "_f__in_1"))]))
+        else:
+            arg-name = if string-equal(string-substring(x.name.id.s, 4, 6), "in"):
+              in-index = string-to-number(string-substring(x.name.id.s, 7, string-length(x.name.id.s))).value + 1
+              num-to-string(in-index)
+            else:
+              "_f__out"
+            end
+            A.s-op(l, l, "op+", A.s-op(l, l, "op+", y, A.s-str(l, ', ')), A.s-app(l, A.s-id(l, A.s-name(l, "num-to-string")), [list: A.s-id(l,  A.s-name(l, arg-name))]))
         end
       end, empty)
 
-    printargs-anf = s-op(l, l, op+, print-temp, s-str(l, ']}')
+    printargs-anf = A.s-op(l, l, "op+", print-temp, A.s-str(l, ']}'))
 
-    print-app = s-app(l, s-id(l, print), link(printargs-anf, empty))
+    print-app = A.s-app(l, A.s-id(l, A.s-name(l, "print")), link(printargs-anf, empty))
 
-    block-out = s-id(l, "_f__out")
+    block-out = A.s-id(l, A.s-name(l, "_f__out"))
 
-    anf-complete = (link(block-out, link(print-app, in-and-out.reverse())).reverse()
+    anf-complete = (link(block-out, link(print-app, in-and-out.reverse())).reverse())
 
-    s-user-block(l, s-block(l, anf-complete))
+    A.s-user-block(l, A.s-block(l, anf-complete))
   end
 }
 
@@ -164,4 +171,3 @@ modified = p.visit(modify-functions)
 as-string = modified.tosource().pretty(80).join-str("\n")
 
 F.output-file("earthquake-transformed.arr", false).display(as-string)
-
