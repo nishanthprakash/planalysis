@@ -17,8 +17,26 @@ gtest =   ```
           end
           ```
 
-#p = SP.surface-parse(F.input-file("test-file.arr").read-file(), "test-file.arr")
+anf-checks =
+```
+block:
+	print('{"student1":[')
 
+	print('{"test1":[')
+	daily-max-for-month([list: 20140901, 101.1, 100, 120, 20140902, 500, 450, 100, 
+20140904, 90, 300, 299.9, 20140905, 400, 20141001, 20, 20141002, 400, 
+500, 300, 20141101, 30], 10)
+	print('"end"]},')
+	print('{"test2":[')
+	daily-max-for-month([list: 20151004, 200, 150, 175], 10)
+	print('"end"]}')
+
+	print(']}')
+  	nothing
+end
+```
+
+#p = SP.surface-parse(F.input-file("test-file.arr").read-file(), "test-file.arr")
 
 p = SP.surface-parse(
   ```
@@ -67,6 +85,8 @@ p = SP.surface-parse(
   ```, 
   "earthquake-2")
 
+# -------------- ANF ----------------
+
 fun replace-where(wblock, fname):
   var whrblock = none
   whast = SP.surface-parse(string-replace(gtest,"fxtxexsxt", fname), "name-of-program.arr")
@@ -91,9 +111,8 @@ fun replace-where(wblock, fname):
   whrblock
 end
 
-var function-counter = 0
 
-modify-functions = A.default-map-visitor.{
+modify-functions-where = A.default-map-visitor.{
   method s-fun(self, l, name, params, args, ann, doc, body, where-block, blocky):
     A.s-fun(
       l,
@@ -104,6 +123,34 @@ modify-functions = A.default-map-visitor.{
       doc,
       body.visit(self),
       replace-where(where-block, name),
+      blocky)
+  end,
+
+  method s-check(self, l , name, body, keyword-check):
+    nothing
+  end
+}
+
+modified-where = p.visit(modify-functions-where)
+as-string-where = modified-where.tosource().pretty(80).join-str("\n")
+F.output-file("earthquake-where.arr", false).display(as-string-where)
+
+
+# -------------- ANF ----------------
+
+var function-counter = 0
+
+modify-functions-anf = A.default-map-visitor.{
+  method s-fun(self, l, name, params, args, ann, doc, body, where-block, blocky):
+    A.s-fun(
+      l,
+      name,
+      params.map(_.visit(self)),
+      args.map(_.visit(self)),
+      ann.visit(self),
+      doc,
+      body.visit(self),
+      none,
       blocky)
   end,
 
@@ -159,34 +206,14 @@ modify-functions = A.default-map-visitor.{
 
       A.s-user-block(l, A.s-block(l, anf-complete))
     end
+  end,
+
+  method s-check(self, l, name, body, keyword-check):
+    nothing
   end
 }
 
-modified = p.visit(modify-functions)
-
-as-string = modified.tosource().pretty(80).join-str("\n")
-
-anf-checks =
-```
-
-block:
-	print('{"student1":[')
-
-	print('{"test1":[')
-	daily-max-for-month([list: 20140901, 101.1, 100, 120, 20140902, 500, 450, 100, 
-20140904, 90, 300, 299.9, 20140905, 400, 20141001, 20, 20141002, 400, 
-500, 300, 20141101, 30], 10)
-	print('"end"]},')
-	print('{"test2":[')
-	daily-max-for-month([list: 20151004, 200, 150, 175], 10)
-	print('"end"]}')
-
-	print(']}')
-	print("jsonENDShere")
-  	nothing
-end
-```
-
-final-string = as-string + "\n\n" + anf-checks
-
-F.output-file("earthquake-transformed.arr", false).display(final-string)
+modified-anf = p.visit(modify-functions-anf)
+as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
+final-string-anf = as-string-anf + "\n\n" + anf-checks
+F.output-file("earthquake-anf.arr", false).display(final-string-anf)
