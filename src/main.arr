@@ -138,42 +138,24 @@ modify-functions = A.default-map-visitor.{
         end, empty)
 
 
-      in-and-out = (link( 
+      in-and-out-rev = (link( 
           A.s-let(l, 
             A.s-bind(l, false, A.s-name(l, "_" + f-str + "__out"), A.a-blank), 
             A.s-app(l, 
               _fun.visit(self), 
               list-argids), false), 
-          let-args.reverse())).reverse()
+          let-args.reverse()))
 
-      # At the time of printing if we have evaluated the fn to have a fn name then replace f-str with the function name?
-      print-temp = in-and-out.foldl(
-        lam(x, y):
-          if is-empty(y):
-            arg-name = if string-equal(string-substring(x.name.id.s, 3 + fs-len, 5 + fs-len), "in"):
-              "_" + f-str + "__in_1"
-            else:
-              "_" + f-str + "__out"
-            end
-            A.s-op(l, l, "op+", A.s-str(l, '{"' + f-str + '":['), A.s-app(l, A.s-id(l, A.s-name(l, "num-to-string")), [list: A.s-id(l, A.s-name(l, arg-name))]))
-          else:
-            arg-name = if string-equal(string-substring(x.name.id.s, 3 + fs-len, 5 + fs-len), "in"):
-              in-index = string-to-number(string-substring(x.name.id.s, 6 + fs-len, string-length(x.name.id.s))).value + 1
-              "_" + f-str + "__in_" + num-to-string(in-index)
-            else:
-              "_" + f-str + "__out"
-            end
-            A.s-op(l, l, "op+", A.s-op(l, l, "op+", y, A.s-str(l, ', ')), A.s-app(l, A.s-id(l, A.s-name(l, "num-to-string")), [list: A.s-id(l,  A.s-name(l, arg-name))]))
-          end
-        end, empty)
-
-      printargs-anf = A.s-op(l, l, "op+", print-temp, A.s-str(l, ']}'))
-
-      print-app = A.s-app(l, A.s-id(l, A.s-name(l, "print")), link(printargs-anf, empty))
+      add-prints-rev = 	link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '"}},')]),
+		      				link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-id(l, A.s-name(l, "_" + f-str + "__out"))]), 
+			      				link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '", "ouput":"')]), 
+				      				link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids)]), 
+				      					link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '{"' + f-str + '":{"input":"')]), 
+				      						in-and-out-rev)))))
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-str + "__out"))
 
-      anf-complete = (link(block-out, link(print-app, in-and-out.reverse())).reverse())
+      anf-complete = (link(block-out, add-prints-rev).reverse())
 
       A.s-user-block(l, A.s-block(l, anf-complete))
     end
@@ -184,4 +166,27 @@ modified = p.visit(modify-functions)
 
 as-string = modified.tosource().pretty(80).join-str("\n")
 
-F.output-file("earthquake-transformed.arr", false).display(as-string)
+anf-checks =
+```
+
+block:
+	print('{"student1":[')
+
+	print('{"test1":[')
+	daily-max-for-month([list: 20140901, 101.1, 100, 120, 20140902, 500, 450, 100, 
+20140904, 90, 300, 299.9, 20140905, 400, 20141001, 20, 20141002, 400, 
+500, 300, 20141101, 30], 10)
+	print('"end"]},')
+	print('{"test2":[')
+	daily-max-for-month([list: 20151004, 200, 150, 175], 10)
+	print('"end"]}')
+
+	print(']}')
+	print("jsonENDShere")
+  	nothing
+end
+```
+
+final-string = as-string + "\n\n" + anf-checks
+
+F.output-file("earthquake-transformed.arr", false).display(final-string)
