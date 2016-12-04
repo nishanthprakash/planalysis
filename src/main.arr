@@ -51,7 +51,7 @@ modify-functions-where = A.default-map-visitor.{
       params.map(_.visit(self)),
       args.map(_.visit(self)),
       ann.visit(self),
-      doc,
+      "",
       body.visit(self),
       replace-where(where-block, name),
       blocky)
@@ -74,7 +74,7 @@ modify-functions-anf = A.default-map-visitor.{
       params.map(_.visit(self)),
       args.map(_.visit(self)),
       ann.visit(self),
-      doc,
+      "",
       body.visit(self),
       none,
       blocky)
