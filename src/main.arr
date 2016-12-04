@@ -16,6 +16,8 @@ anf-checks = F.input-file(anf-checks-file).read-file()
 stud-repos = FL.list-files(stud-data-dir)
 two-submissions = [list: "earthquake-1.arr", "earthquake-2.arr"]
 
+var function-counter = 0
+
 # -------------- where ----------------
 
 fun replace-where(wblock, fname):
@@ -64,7 +66,7 @@ modify-functions-where = A.default-map-visitor.{
 
 # -------------- ANF ----------------
 
-var function-counter = 0
+
 
 modify-functions-anf = A.default-map-visitor.{
   method s-fun(self, l, name, params, args, ann, doc, body, where-block, blocky):
@@ -162,6 +164,7 @@ for each(stud-dir from stud-repos):
     for each(stud-sub from two-submissions):
       
       block:
+        function-counter := 0
         student-file = student-file-pre + "/" + stud-sub
         student-file-out-pre = fs-out-dir + "/" + stud-sub
         student-file-out-anf = string-replace(student-file-out-pre, ".arr", "-anf.arr")
