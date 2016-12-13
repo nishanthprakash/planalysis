@@ -18,9 +18,10 @@ for sdir in student_dirs:
 				for test in tests:
 					for testID, functions in test.items():
 						for function in functions:
-								sdlist.append({'studentID': int(studID), 'submissionID': int(file_index), 'testcaseID': int(testID), 'functionID': ('' if function['function'] == '' else int(function['function'])), 'function-input': function['input'], 'funtion-output': function['output']})
+								if function['fid'] != '':
+									sdlist.append({'studentID': int(studID), 'submissionID': int(file_index), 'testcaseID': int(testID), 'functionID': int(function['fid']), 'function_name':  function['fname'], 'function_input': function['fin'], 'funtion_output': function['fout']})
 
 student_data = pandas.DataFrame(sdlist)
-student_data = student_data[['studentID', 'submissionID', 'testcaseID', 'functionID', 'function-input', 'funtion-output']]
+student_data = student_data[['studentID', 'submissionID', 'testcaseID', 'functionID', 'function_name', 'function_input', 'funtion_output']]
 
-student_data.to_excel("student_data.xlsx", sheet_name='anf')
+student_data.to_excel("student_data.xlsx", sheet_name='anf', index=False)

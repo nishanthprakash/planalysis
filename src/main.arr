@@ -87,16 +87,16 @@ modify-functions-anf = A.default-map-visitor.{
     block:
       function-counter := function-counter + 1
 
-      f-str = num-to-string(function-counter)
-      fs-len = string-length(f-str)
+      f-id = num-to-string(function-counter)
+      fs-len = string-length(f-id)
 
       let-args = args.foldr(
         lam(x, y):
           cases(List) y:
-            | empty => link(A.s-let(l, A.s-bind(l, false, A.s-name(l,  "_" + f-str + "__in_1"), A.a-blank), x.visit(self), false), y)
+            | empty => link(A.s-let(l, A.s-bind(l, false, A.s-name(l,  "_" + f-id + "__in_1"), A.a-blank), x.visit(self), false), y)
             | link(first, rest) => 
               in-index = string-to-number(string-substring(first.name.id.s, 6 + fs-len, string-length(first.name.id.s))).value + 1
-              arg-name = "_" + f-str + "__in_" + num-to-string(in-index)
+              arg-name = "_" + f-id + "__in_" + num-to-string(in-index)
               link(A.s-let(l, A.s-bind(l, false, A.s-name(l, arg-name), A.a-blank), x.visit(self), false), y)  
           end
         end, empty)
@@ -104,31 +104,40 @@ modify-functions-anf = A.default-map-visitor.{
       list-argids = args.foldr(
         lam(_, y):
           cases(List) y:
-            | empty => link(A.s-id(l, A.s-name(l, "_" + f-str + "__in_1")), y)
+            | empty => link(A.s-id(l, A.s-name(l, "_" + f-id + "__in_1")), y)
             | link(first, rest) => 
               in-index = string-to-number(string-substring(first.id.s, 6 + fs-len, string-length(first.id.s))).value + 1
-              arg-name = "_" + f-str + "__in_" + num-to-string(in-index)
+              arg-name = "_" + f-id + "__in_" + num-to-string(in-index)
               link(A.s-id(l, A.s-name(l, arg-name)), y)  
           end
         end, empty)
 
+      function-name = 
+	      cases(A.Expr) _fun:
+	      	| s-id(loc, f-name) => 	
+	      		cases(A.Name) f-name:
+	      		  | s-name(loctn, f-str) => f-str
+	      		  | else => "??"
+	      		end
+	      	| else => "?"
+	      end
 
       in-and-out-rev = (link( 
           A.s-let(l, 
-            A.s-bind(l, false, A.s-name(l, "_" + f-str + "__out"), A.a-blank), 
+            A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
             A.s-app(l, 
               _fun.visit(self), 
               list-argids), false), 
           let-args.reverse()))
 
       add-prints-rev =  link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '"},')]),
-        link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-id(l, A.s-name(l, "_" + f-str + "__out"))]), 
-          link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '", "output":"')]), 
+        link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-id(l, A.s-name(l, "_" + f-id + "__out"))]), 
+          link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '", "fout":"')]), 
             link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids)]), 
-              link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '{"function":"' + f-str + '", "input":"')]), 
+              link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '{"fid":"' + f-id + '", "fname":"' + function-name + '", "fin":"')]), 
                 in-and-out-rev)))))
 
-      block-out = A.s-id(l, A.s-name(l, "_" + f-str + "__out"))
+      block-out = A.s-id(l, A.s-name(l, "_" + f-id + "__out"))
 
       anf-complete = (link(block-out, add-prints-rev).reverse())
 
