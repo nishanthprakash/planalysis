@@ -87,7 +87,7 @@ modify-functions-anf = A.default-map-visitor.{
     block:
       function-counter := function-counter + 1
 
-      f-str = "f" + num-to-string(function-counter)
+      f-str = num-to-string(function-counter)
       fs-len = string-length(f-str)
 
       let-args = args.foldr(
@@ -121,11 +121,11 @@ modify-functions-anf = A.default-map-visitor.{
               list-argids), false), 
           let-args.reverse()))
 
-      add-prints-rev =  link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '"}},')]),
+      add-prints-rev =  link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '"},')]),
         link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-id(l, A.s-name(l, "_" + f-str + "__out"))]), 
-          link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '", "ouput":"')]), 
+          link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '", "output":"')]), 
             link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids)]), 
-              link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '{"' + f-str + '":{"input":"')]), 
+              link(A.s-app(l, A.s-id(l, A.s-name(l, "print")), [list: A.s-str(l, '{"function":"' + f-str + '", "input":"')]), 
                 in-and-out-rev)))))
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-str + "__out"))
@@ -178,7 +178,8 @@ for each(stud-dir from stud-repos):
 
         modified-anf = p.visit(modify-functions-anf)
         as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
-        final-string-anf = as-string-anf + "\n\n" + anf-checks
+
+        final-string-anf = as-string-anf + "\n\n" + string-replace(anf-checks, "xsxtxuxdxexnxtx", stud-dir) 
         F.output-file(student-file-out-anf, false).display(final-string-anf)
       end
 
