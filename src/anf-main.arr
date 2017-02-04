@@ -18,6 +18,8 @@ var function-counter = 0
 
 var datadefs = ""
 
+var alreadydef = [set: "Report"]
+
 # -------------- ANF ----------------
 
 modify-functions-anf = A.default-map-visitor.{
@@ -133,10 +135,10 @@ modify-functions-anf = A.default-map-visitor.{
 	        self.option(_check)
 		)
 
-	    when not(string-equal(name, "Report")):
+	    when not(alreadydef.member(name)):
 	    	datadefs := datadefs + "\\n\\n" + sdata.tosource().pretty(80).join-str("\\n")
 	    end
-
+	    alreadydef := alreadydef.add(name)
 	    sdata
     end
   end,
@@ -170,6 +172,7 @@ for each(stud-dir from stud-repos):
     for each(stud-sub from two-submissions):
       
       block:
+      	datadefs := ""
         function-counter := 0
         student-file = student-file-pre + "/" + stud-sub
         student-file-out-pre = fs-out-dir + "/" + stud-sub
@@ -210,9 +213,9 @@ end
 ```
 
 + '\n\nnothing\n\nend'
-        
 
         F.output-file(student-file-out-anf, false).display(final-string-anf)
+
       end
 
     end
