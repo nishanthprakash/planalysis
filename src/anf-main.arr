@@ -16,6 +16,8 @@ two-submissions = [list: "earthquake-1.arr", "earthquake-2.arr"]
 
 var function-counter = 0
 
+var datadefs = ""
+
 # -------------- ANF ----------------
 
 modify-functions-anf = A.default-map-visitor.{
@@ -42,6 +44,8 @@ modify-functions-anf = A.default-map-visitor.{
 
       # Have to remove and put back each i/p argument separately as the arglist is not a list in the program runtime 
       # (the list cant be directly captured, thought it could probably be splat into i/p list of the funtion)
+      # Besides, more importantly, the args need to be eval'd only once (incase they have side effects)
+      # got to collect the output too, there is no way to torepr the in-out anf tuple before execution
 
       let-args = args.foldr(
         lam(x, y):
@@ -98,6 +102,42 @@ modify-functions-anf = A.default-map-visitor.{
       anf-complete = link(block-out, link(addto-acc, in-and-out-rev)).reverse()
 
       A.s-user-block(l, A.s-block(l, anf-complete))
+    end
+  end,
+
+  method s-data(
+      self,
+      l :: A.Loc,
+      name :: String,
+      params :: List<A.Name>, # type params
+      mixins :: List<A.Expr>,
+      variants :: List<A.Variant>,
+      shared-members :: List<A.Member>,
+      _check-loc :: Option<A.Loc>,
+      _check :: Option<A.Expr>
+    ):
+
+    # Just converting the data definitions into strings and collecting them  
+    # as we dont need to wait for this to execute as opposed to ANF tuples
+    # eval is done once in student program env and this prog env.
+    block:
+		sdata =
+		A.s-data(
+	        l,
+	        name,
+	        params.map(_.visit(self)),
+	        mixins.map(_.visit(self)),
+	        variants.map(_.visit(self)),
+	        shared-members.map(_.visit(self)),
+	        _check-loc,
+	        self.option(_check)
+		)
+
+	    when not(string-equal(name, "Report")):
+	    	datadefs := datadefs + "\\n\\n" + sdata.tosource().pretty(80).join-str("\\n")
+	    end
+
+	    sdata
     end
   end,
 
@@ -160,11 +200,11 @@ block:
 if not(xFLx.exists("``` + base + "/anfdata.arr" + ```")):
 
 ``` 
-+ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", false).display("provide * \\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
++ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", false).display("provide * \\n\\ndata Report: | max-hz(day :: Number, max-reading :: Number) end\\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
 ```
 else:
 ```
-+ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", true).display("\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
++ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", true).display("\\n\\n' + datadefs + '\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
 ```
 end
 ```
