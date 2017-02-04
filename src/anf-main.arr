@@ -72,15 +72,7 @@ modify-functions-anf = A.default-map-visitor.{
 	      			| s-name(loctn, f-str) => f-str
 	      			| else => "__"
 	      		end
-	      	| s-dot(ll, aa, bb) => 
-	            cases(A.Expr) aa:
-	            	| s-id(aloc, af-name) =>  
-	              		cases(A.Name) af-name:
-	                		| s-name(aloctn, af-str) => af-str + "." + bb
-	                		| else => "____"
-	                	end
-	            	| else => "___"
-	            end
+	      	| s-dot(ll, aa, bb) => bb
 	      	| else => "lambda"
 	      end
 
@@ -148,6 +140,7 @@ for each(stud-dir from stud-repos):
         modified-anf = p.visit(modify-functions-anf)
         as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
 
+        # appending data to prevent order dependency
         final-string-anf = 
 ```
 import file as xFx
@@ -162,15 +155,21 @@ var dxaxt = empty
 
 block:
 ``` 
-  + anf-checks + 
++ anf-checks + "\n\n" +
 ```
+if not(xFLx.exists("``` + base + "/anfdata.arr" + ```")):
 
-when not(xFLx.exists("``` + base + "/anfdata" + ```")):
-  xFLx.create-dir("``` + base + "/anfdata" + ```") 
+``` 
++ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", false).display("provide * \\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
+```
+else:
+```
++ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", true).display("\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
+```
 end
-
 ```
-+ '\n\nxFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + stud-sub + "-anfdata.arr" + '", false).display("provide * \\n\\nD = " + torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}))\n\nnothing\n\nend'
+
++ '\n\nnothing\n\nend'
         
 
         F.output-file(student-file-out-anf, false).display(final-string-anf)
