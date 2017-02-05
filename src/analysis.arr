@@ -3,4 +3,4 @@ import filelib as FL
 
 import file('../data/anfdata.arr') as A
 
-print(A.dat.last)
+A.dat

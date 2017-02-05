@@ -60,6 +60,8 @@ modify-functions-anf = A.default-map-visitor.{
           end
         end, empty)
 
+      # Reverse orders of arg evals, check if it matters
+
       list-argids = args.foldr(
         lam(_, y):
           cases(List) y:
@@ -96,8 +98,9 @@ modify-functions-anf = A.default-map-visitor.{
                           [list: A.s-tuple(l, 
                               [list:
                                 A.s-id(l, A.s-name(l, f-id)), 
-                                A.s-str(l, function-name), 
-                                A.s-id(l, A.s-name(l, "_" + f-id + "__out"))] + list-argids )])]))
+                                A.s-str(l, function-name),
+                                A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids),
+                                A.s-id(l, A.s-name(l, "_" + f-id + "__out"))])])]))
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-id + "__out"))
 
