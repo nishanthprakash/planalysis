@@ -78,7 +78,7 @@ modify-functions-anf = A.default-map-visitor.{
 	      	| s-id(loc, f-name) => 	
 	      		cases(A.Name) f-name:
 	      			| s-name(loctn, f-str) => f-str
-	      			| else => "__"
+	      			| else => "___"
 	      		end
 	      	| s-dot(ll, aa, bb) => bb
 	      	| else => "lambda"
@@ -110,6 +110,7 @@ modify-functions-anf = A.default-map-visitor.{
     end
   end,
 
+  # Need to take care of name conflicts
   method s-data(
       self,
       l :: A.Loc,
@@ -206,11 +207,11 @@ block:
 if not(xFLx.exists("``` + base + "/anfdata.arr" + ```")):
 
 ``` 
-+ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", false).display("provide * \\n\\ndata Report: | max-hz(day :: Number, max-reading :: Number) end\\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
++ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", false).display("provide * \\n\\ndata Report: | max-hz(day :: Number, max-reading :: Number) end\\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
 ```
 else:
 ```
-+ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", true).display("\\n\\n' + datadefs + '\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; "' + stud-sub + '"; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
++ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", true).display("\\n\\n' + datadefs + '\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
 ```
 end
 ```
