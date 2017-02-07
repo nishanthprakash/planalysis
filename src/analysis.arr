@@ -3,6 +3,8 @@ import filelib as FL
 include string-dict
 import file('../data/anfdata.arr') as A
 
+distancesdir = '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/data/distances'
+
 fun appordering():
 0
 end
@@ -12,7 +14,7 @@ distancefuns =
 
 # Call counts
 lam(a, b):
-0
+	num-abs(a.value.length() - b.value.length())
 end,
 
 # Exactly equal
@@ -71,13 +73,14 @@ fun correls(studfuns):
 		link(link(link("", fnames), (for fold(rows from [list: ], fnA from fnames):
 			block:
 				i := i + 1
+				j := 0
 				link(link(fnA, (for fold(columns from [list: ], fnB from fnames):
 					block:
 						j := j + 1
 						if (j <= i):
 							link(0, columns) 
 						else:
-							link(distfn(fnA, fnB), columns)
+							link(distfn(studfuns.get(fnA), studfuns.get(fnB)), columns)
 						end
 					end
 				end).reverse()), rows)
@@ -86,11 +89,15 @@ fun correls(studfuns):
 	end).reverse()
 end
 
+when not(FL.exists(distancesdir)):
+  FL.create-dir(distancesdir)
+end
+
 var file-counter = 0
 (correls(collapse-indices(A.dat).freeze())).each(lam(mat): 
 		block:
 			file-counter := file-counter + 1
-			F.output-file(num-to-string(file-counter) + ".csv", false).display((mat.map(lam(row): 
+			F.output-file(distancesdir + "/" + num-to-string(file-counter) + ".csv", false).display((mat.map(lam(row): 
 				row.join-str(", ") end)).join-str("\n"))
 		end
 	end)
