@@ -9,58 +9,41 @@ import file('../data/anfdata.arr') as A
 studprogs = A.dat
 
 fun appordering():
-
+0
 end
 
 distancefuns = 
 [list:
 
 # Call counts
-lam ():
-
+lam (a, b):
+0
 end,
 
 # Exactly equal
-lam ():
-
+lam (a, b):
+0
 end,
 
 # distance1
-lam ():
-
+lam (a, b):
+0
 end,
 
 # distance2
-lam ():
-
+lam (a, b):
+0
 end,
 
 # distanceiso
-lam ():
-
+lam (a, b):
+0
 end]
 
 # Groupby function names
-# Need to take care of name conflicts (assume same function if function names are same, except lambda, and underscores)
 
-fun groupfuns(sp):
-	unnamed = [set: "lambda", "___"]
-	for map(studsub from sp):
-		{sid; subid; submission} = studsub
-		for map(testcase from submission):
-			for fold(fundict from [mutable-string-dict: ], tuple from testcase):
-				{fid; fname; fin; fout} = tuple
-				when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
-					if fundict.has-key(fname):
-						fundict.set-now(fname, fundict.get-value-now(fname).append([list: {fin; fout}]))
-					else:
-						fundict.set-now(fname, [list: {fin; fout}])
-					end
-				end
-			end
-		end
-	end
-end
+# Need to take care of name conflicts later within a student program (for now 
+# assume same function if function names are same, except lambda, and underscores)
 
 fun collapse-indices(sp):
 	unnamed = [set: "lambda", "___"]
@@ -82,11 +65,9 @@ fun collapse-indices(sp):
 	end
 end
 
-# grouped = groupfuns(studprogs)
-studfuns = collapse-indices(studprogs)
-var i = 0
-var j = 0
 fun correls(studfuns):
+	var i = 0
+	var j = 0
 	fnames = studfuns.keys().to-list()
 	(for fold(matrices from [list: ], distfn from distancefuns):
 		link(matrices, (for fold(rows from [list: ], fnA from fnames):
@@ -102,3 +83,8 @@ fun correls(studfuns):
 		end).reverse())
 	end).reverse()
 end
+
+var file-counter = 0
+correls(collapse-indices(studprogs)).each(lam(mat): 
+	F.output-file(num-to-string(file-counter := file-counter + 1) + ".csv", false).display(mat.map(lam(row): 
+		row.join-str(", ") end).join-str("\n")) end)
