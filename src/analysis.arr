@@ -68,10 +68,10 @@ fun correls(studfuns):
 	var j = 0
 	fnames = studfuns.keys().to-list()
 	(for fold(matrices from [list: ], distfn from distancefuns):
-		link((for fold(rows from [list: ], fnA from fnames):
+		link(link(link("", fnames), (for fold(rows from [list: ], fnA from fnames):
 			block:
 				i := i + 1
-				link((for fold(columns from [list: ], fnB from fnames):
+				link(link(fnA, (for fold(columns from [list: ], fnB from fnames):
 					block:
 						j := j + 1
 						if (j <= i):
@@ -80,9 +80,9 @@ fun correls(studfuns):
 							link(distfn(fnA, fnB), columns)
 						end
 					end
-				end).reverse(), rows)
+				end).reverse()), rows)
 			end
-		end).reverse(), matrices)
+		end).reverse()), matrices)
 	end).reverse()
 end
 
@@ -90,7 +90,6 @@ var file-counter = 0
 (correls(collapse-indices(A.dat).freeze())).each(lam(mat): 
 		block:
 			file-counter := file-counter + 1
-			#print(mat)
 			F.output-file(num-to-string(file-counter) + ".csv", false).display((mat.map(lam(row): 
 				row.join-str(", ") end)).join-str("\n"))
 		end
