@@ -19,7 +19,11 @@ end,
 
 # Exactly equal
 lam(a, b):
-0
+	if a.value == b.value:
+		0
+	else:
+		1
+	end
 end,
 
 # distance1
@@ -42,7 +46,7 @@ end]
 # Need to take care of name conflicts later within a student program (for now 
 # assume same function if function names are same, except lambda, and underscores)
 
-fun collapse-indices(sp):
+fun collapse-indices(sp, names):
 	unnamed = [set: "lambda", "___"]
 	for fold(fundict from [mutable-string-dict: ], studsub from sp):
 		block:
@@ -50,7 +54,11 @@ fun collapse-indices(sp):
 			for each(testcase from submission):
 				for each(tuple from testcase):
 					{fid; fname; fin; fout} = tuple
-					name = num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
+					if names:
+						name = num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
+					else:
+						name = num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid
+					end
 					when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
 						if fundict.has-key-now(name):
 							fundict.set-now(name, fundict.get-value-now(name).append([list: {fin; fout}]))
@@ -94,7 +102,7 @@ when not(FL.exists(distancesdir)):
 end
 
 var file-counter = 0
-(correls(collapse-indices(A.dat).freeze())).each(lam(mat): 
+(correls(collapse-indices(A.dat, true).freeze())).each(lam(mat): 
 		block:
 			file-counter := file-counter + 1
 			F.output-file(distancesdir + "/" + num-to-string(file-counter) + ".csv", false).display((mat.map(lam(row): 
