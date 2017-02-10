@@ -14,12 +14,12 @@ distancefuns =
 
 # Call counts
 lam(a, b):
-	num-abs(a.value.length() - b.value.length())
+	num-abs(a.length() - b.length())
 end,
 
 # Exactly equal
 lam(a, b):
-	if a.value == b.value:
+	if a == b:
 		0
 	else:
 		1
@@ -88,7 +88,7 @@ fun correls(studfuns):
 						if (j <= i):
 							link(0, columns) 
 						else:
-							link(distfn(studfuns.get(fnA), studfuns.get(fnB)), columns)
+							link(distfn(studfuns.get(fnA).value, studfuns.get(fnB)).value, columns)
 						end
 					end
 				end).reverse()), rows)
