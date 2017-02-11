@@ -54,10 +54,10 @@ fun collapse-indices(sp, names):
 			for each(testcase from submission):
 				for each(tuple from testcase):
 					{fid; fname; fin; fout} = tuple
-					if names:
-						name = num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
+					name = if names:
+						num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 					else:
-						name = num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid
+						num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid
 					end
 					when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
 						if fundict.has-key-now(name):
@@ -88,7 +88,7 @@ fun correls(studfuns):
 						if (j <= i):
 							link(0, columns) 
 						else:
-							link(distfn(studfuns.get(fnA).value, studfuns.get(fnB)).value, columns)
+							link(distfn(studfuns.get(fnA).value, studfuns.get(fnB).value), columns)
 						end
 					end
 				end).reverse()), rows)
