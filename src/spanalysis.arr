@@ -1,8 +1,8 @@
 import file as F
 import filelib as FL
 include string-dict
-import file('../data/anfdata/STF1.arr') as A
-import file('../data/anfdata/STF2.arr') as B
+import file('../data/anfdata/9-2.arr') as A
+import file('../data/anfdata/9-2.arr') as B
 
 distancesdir = '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/data/distances'
 
@@ -96,7 +96,7 @@ var file-counter = 0
 (correls-across(collapse-indices(A.dat, true).freeze(), collapse-indices(B.dat, true).freeze())).each(lam(mat): 
 		block:
 			file-counter := file-counter + 1
-			F.output-file(distancesdir + "/" + num-to-string(file-counter) + "_" + "STF1_STF2" + ".csv", false).display((mat.map(lam(row): 
+			F.output-file(distancesdir + "/" + num-to-string(file-counter) + "_" + "9-2_9-2" + ".csv", false).display((mat.map(lam(row): 
 				row.join-str(", ") end)).join-str("\n"))
 		end
 	end)

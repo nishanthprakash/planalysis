@@ -18,8 +18,6 @@ var function-counter = 0
 
 var datadefs = ""
 
-var alreadydef = [set: "Report"]
-
 # -------------- ANF ----------------
 
 modify-functions-anf = A.default-map-visitor.{
@@ -139,10 +137,7 @@ modify-functions-anf = A.default-map-visitor.{
 	        self.option(_check)
 		)
 
-	    when not(alreadydef.member(name)):
-	    	datadefs := datadefs + "\\n\\n" + sdata.tosource().pretty(80).join-str("\\n")
-	    end
-	    alreadydef := alreadydef.add(name)
+	    datadefs := datadefs + "\\n\\n" + sdata.tosource().pretty(80).join-str("\\n")
 	    sdata
     end
   end,
@@ -204,19 +199,14 @@ block:
 ``` 
 + anf-checks + "\n\n" +
 ```
-if not(xFLx.exists("``` + base + "/anfdata.arr" + ```")):
+when not(xFLx.exists("``` + base + "/anfdata" + ```")):
+  xFLx.create-dir("``` + base + "/anfdata" + ```") 
+end
 
 ``` 
-+ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", false).display("provide * \\n\\ndata Report: | max-hz(day :: Number, max-reading :: Number) end\\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
-```
-else:
-```
-+ '\n\nxFx.output-file("' + base + "/anfdata.arr" + '", true).display("\\n\\n' + datadefs + '\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" +
-```
-end
-```
++ '\n\nxFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(stud-sub, 11, 12) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" + 
 
-+ '\n\nnothing\n\nend'
+'\n\nnothing\n\nend'
 
         F.output-file(student-file-out-anf, false).display(final-string-anf)
 
