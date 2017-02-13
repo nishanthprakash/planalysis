@@ -2,10 +2,10 @@ import ast as A
 import parse-pyret as SP
 import file as F
 import filelib as FL
-
 import file('../data/tests/anf-checks.arr') as anf-checks
+import cmdline as C
 
-base = '../data'
+base = (C.args).first
 
 stud-data-dir = base + "/student-codes"
 
@@ -153,6 +153,9 @@ when not(FL.exists(transform-dir)):
   FL.create-dir(transform-dir)
 end
 
+var blockstr = 0
+var tind = 0
+
 for each(stud-dir from stud-repos):
   block:
     student-file-pre = stud-data-dir + "/" + stud-dir + "/final-submission"
@@ -180,17 +183,18 @@ for each(stud-dir from stud-repos):
         modified-anf = p.visit(modify-functions-anf)
         as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
 
-        var tind = 0
-        for each(test from anf-checks.tests):
+        tind := 0
+        blockstr := ""
+        for each(test from anf-checks.ins) block:
           tind := tind + 1
 
           blockstr := blockstr + 
 ```
-\n\ndxaxt := empty\n\n
+dxaxt := empty
 ``` 
-+ test + "\n\n" +
++ "\n\n" + test + "\n\n" +
 
-'\n\nxFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(stud-sub, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n"
+'xFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(stud-sub, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\""))' + "\n\n"
 
         end
 
@@ -204,18 +208,18 @@ import filelib as xFLx
 var dxaxt = empty
 
 ``` 
-  + string-replace(as-string-anf, "provide *", "") +  "\n\n" +
+  + string-replace("provide *" + "\n\n" + as-string-anf, "provide *", "") +  "\n\n" +
+
+```
+block:
+``` 
++ "\n\n" + 
 ```
 when not(xFLx.exists("``` + base + "/anfdata" + ```")):
   xFLx.create-dir("``` + base + "/anfdata" + ```") 
 end
-\n\n
-```  + 
-
-```
-block:\n\n
-``` 
-+ blockstr
+```  
++ "\n\n" + blockstr
 
 + '\n\nnothing\n\nend'
 

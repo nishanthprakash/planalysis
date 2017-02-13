@@ -31,36 +31,34 @@ end
 
 # distance2
 
-# distanceiso]
+# distanceiso
+]
 
 # Groupby function names
 
 # Need to take care of name conflicts later within a student program (for now 
 # assume same function if function names are same, except lambda, and underscores)
 
-fun collapse-indices(sp, names):
+fun collapse-indices(sp, names) block:
 	unnamed = [set: "lambda", "___"]
-	for fold(fundict from [mutable-string-dict: ], studsub from sp):
-		block:
-			{sid; subid; submission} = studsub
-			for each(tuple from testcase):
-				{fid; fname; fin; fout} = tuple
-				name = if names:
-					num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
-				else:
-					num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid
-				end
-				when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
-					if fundict.has-key-now(name):
-						fundict.set-now(name, fundict.get-value-now(name).append([list: {fin; fout}]))
-					else:
-						fundict.set-now(name, [list: {fin; fout}])
-					end
-				end
+	{sid; subid; appdata} = sp
+	fundict = [mutable-string-dict: ]
+	for each(ftuple from appdata):
+		{fid; fname; fin; fout} = ftuple
+		name = if names:
+			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
+		else:
+			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid
+		end
+		when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
+			if fundict.has-key-now(name):
+				fundict.set-now(name, fundict.get-value-now(name).append([list: {fin; fout}]))
+			else:
+				fundict.set-now(name, [list: {fin; fout}])
 			end
-			fundict
 		end
 	end
+	fundict
 end
 
 fun correls-across(studfuns1, studfuns2):
@@ -82,10 +80,8 @@ when not(FL.exists(distancesdir)):
 end
 
 var file-counter = 0
-(correls-across(collapse-indices(A.dat, true).freeze(), collapse-indices(B.dat, true).freeze())).each(lam(mat): 
-		block:
-			file-counter := file-counter + 1
-			F.output-file(distancesdir + "/" + num-to-string(file-counter) + "_" + "STF1xSTF2" + ".csv", false).display((mat.map(lam(row): 
-				row.join-str(", ") end)).join-str("\n"))
-		end
+(correls-across(collapse-indices(A.dat, true).freeze(), collapse-indices(B.dat, true).freeze())).each(lam(mat) block:
+		file-counter := file-counter + 1
+		F.output-file(distancesdir + "/" + num-to-string(file-counter) + "f" + "STF1xSTF2" + ".csv", false).display((mat.map(lam(row): 
+			row.join-str(", ") end)).join-str("\n"))
 	end)

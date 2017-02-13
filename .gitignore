@@ -4,6 +4,6 @@ data/student-codes
 data/transformed
 data/anfdata
 data/distances
-data/anfdata.arr
 src/experimental
+src/spanalysis.arr
 *.jarr
