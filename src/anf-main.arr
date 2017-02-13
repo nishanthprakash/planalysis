@@ -2,14 +2,12 @@ import ast as A
 import parse-pyret as SP
 import file as F
 import filelib as FL
-import cmdline as C
 
-base = (C.args).first
+import file('../data/tests/anf-checks.arr') as anf-checks
 
-anf-checks-file = base + "/tests/anf-checks.arr"
+base = '../data'
+
 stud-data-dir = base + "/student-codes"
-
-anf-checks = F.input-file(anf-checks-file).read-file()
 
 stud-repos = FL.list-files(stud-data-dir)
 two-submissions = [list: "earthquake-1.arr", "earthquake-2.arr"]
@@ -182,6 +180,27 @@ for each(stud-dir from stud-repos):
         modified-anf = p.visit(modify-functions-anf)
         as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
 
+        var tind = 0
+        for each(test from anf-checks.tests):
+          tind := tind + 1
+
+          blockstr := blockstr + 
+```
+\n\ndxaxt := empty\n\n
+``` 
++ test + "\n\n" +
+
+```
+when not(xFLx.exists("``` + base + "/anfdata/" + num-to-string(tind) + ```")):
+  xFLx.create-dir("``` + base + "/anfdata/" + num-to-string(tind) + ```") 
+end
+\n\n
+``` +
+
+'\n\nxFx.output-file("' + base + "/anfdata/" + num-to-string(tind) + stud-dir + "-" + string-substring(stud-sub, 11, 12) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n"
+
+        end
+
         # appending data to prevent order dependency
         final-string-anf = 
 ```
@@ -194,19 +213,18 @@ var dxaxt = empty
 ``` 
   + string-replace(as-string-anf, "provide *", "") +  "\n\n" +
 ```
-
-block:
-``` 
-+ anf-checks + "\n\n" +
-```
 when not(xFLx.exists("``` + base + "/anfdata" + ```")):
   xFLx.create-dir("``` + base + "/anfdata" + ```") 
 end
+\n\n
+```  + 
 
+```
+block:\n\n
 ``` 
-+ '\n\nxFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(stud-sub, 11, 12) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; collect-dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n" + 
++ blockstr
 
-'\n\nnothing\n\nend'
++ '\n\nnothing\n\nend'
 
         F.output-file(student-file-out-anf, false).display(final-string-anf)
 
