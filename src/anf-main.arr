@@ -190,14 +190,7 @@ for each(stud-dir from stud-repos):
 ``` 
 + test + "\n\n" +
 
-```
-when not(xFLx.exists("``` + base + "/anfdata/" + num-to-string(tind) + ```")):
-  xFLx.create-dir("``` + base + "/anfdata/" + num-to-string(tind) + ```") 
-end
-\n\n
-``` +
-
-'\n\nxFx.output-file("' + base + "/anfdata/" + num-to-string(tind) + stud-dir + "-" + string-substring(stud-sub, 11, 12) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n"
+'\n\nxFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(stud-sub, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\nvar dat = empty\\n\\ndat := dat.append([list: " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"") + "])")' + "\n\n"
 
         end
 

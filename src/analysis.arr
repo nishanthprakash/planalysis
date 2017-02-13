@@ -85,7 +85,7 @@ var file-counter = 0
 (correls-across(collapse-indices(A.dat, true).freeze(), collapse-indices(B.dat, true).freeze())).each(lam(mat): 
 		block:
 			file-counter := file-counter + 1
-			F.output-file(distancesdir + "/" + num-to-string(file-counter) + "_" + "STF1_STF2" + ".csv", false).display((mat.map(lam(row): 
+			F.output-file(distancesdir + "/" + num-to-string(file-counter) + "_" + "STF1xSTF2" + ".csv", false).display((mat.map(lam(row): 
 				row.join-str(", ") end)).join-str("\n"))
 		end
 	end)
