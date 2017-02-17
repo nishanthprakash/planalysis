@@ -48,7 +48,7 @@ fun collapse-indices(sp, names) block:
 		name = if names:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 		else:
-			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid ":" + fname
+			num-to-string(sid) + ":" + num-to-string(subid) + ":" + num-to-string(fid) + ":" + fname
 		end
 		when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
 			if fundict.has-key-now(name):
