@@ -48,7 +48,7 @@ fun collapse-indices(sp, names) block:
 		name = if names:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 		else:
-			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid
+			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fid ":" + fname
 		end
 		when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
 			if fundict.has-key-now(name):
@@ -81,6 +81,12 @@ end
 
 var file-counter = 0
 (correls-across(collapse-indices(A.dat, true).freeze(), collapse-indices(B.dat, true).freeze())).each(lam(mat) block:
+		file-counter := file-counter + 1
+		F.output-file(distancesdir + "/" + num-to-string(file-counter) + "f" + "STF1xSTF2" + ".csv", false).display((mat.map(lam(row): 
+			row.join-str(", ") end)).join-str("\n"))
+	end)
+
+(correls-across(collapse-indices(A.dat, false).freeze(), collapse-indices(B.dat, true).freeze())).each(lam(mat) block:
 		file-counter := file-counter + 1
 		F.output-file(distancesdir + "/" + num-to-string(file-counter) + "f" + "STF1xSTF2" + ".csv", false).display((mat.map(lam(row): 
 			row.join-str(", ") end)).join-str("\n"))
