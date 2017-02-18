@@ -43,7 +43,7 @@ for (dfn in dfns){
 for (mfn in mfns){
   for (tc in mtcs){
     counts = Reduce(function(accc, i) 
-      rbind(accc, read.csv(paste("./measures/", mfn, "f", i, "_", tc, ".csv", sep=""), header=FALSE)), msubs)
+      rbind(accc, read.csv(paste("./measures/", mfn, "f", i, "_", tc, ".csv", sep="")[3], header=FALSE)), msubs)
     png(paste("./plots/counts/", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
     par(cex=0.4, mar=c(15,3,3,3)) 
     barplot(table(counts), las = 2)
@@ -55,12 +55,40 @@ for (mfn in mfns){
   for (tc in mtcs){
     for (sub in msubs){
       studfns = read.csv(paste("./measures/", mfn, "f", sub, "_", tc, ".csv", sep=""), header=FALSE)
-      png(paste("./plots/order/", mfn, "f", sub, "_", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-      par(cex=0.2, mar=c(15,3,3,3))
-      for (x in studfns) {}
-      ord = as.numeric(interaction(x))
-      names(ord) = x
-      barplot(ord, las = 2)
+      png(paste("./plots/order/", mfn, "f", sub, "_", tc,".png", sep=""), width=12,height=12,units="in", res=800)
+      par(cex=0.1, mar=c(15,3,3,3))
+      c13 = studfns[, c(1, 3)]
+      c23 = studfns[, c(2, 3)]
+      names(c13) = names(c23)
+      i = rbind(c13, c23)
+      i = i[order(i[,1]), ]
+      for (i1 in i[1]) {}
+      for (i2 in i[2]) {}
+      
+      for (c1 in studfns[1]) {}
+      for (c2 in studfns[2]) {}
+      for (c3 in studfns[3]) {}
+      j = sort(c(c1, c2))
+      
+      fs = unique(c3)
+      fcols = rainbow(length(fs))
+      
+      plot.new()
+      plot.window(xlim = range(j), ylim = range(j))
+      axis(1, at=i1,labels=i2, pos=-5, las=2)
+      axis(2, at=j,labels=j, pos=-5, las=2)
+      
+      for (ind in 1:length(studfns[, 1])){
+        fin = match(c(as.character(studfns[ind,3])), fs)
+        x = c(studfns[ind,][1], studfns[ind,][1], studfns[ind,][2], studfns[ind,][2])
+        y = c(studfns[ind,][1], studfns[ind,][2], studfns[ind,][2], studfns[ind,][1])
+        pcol = rgb((col2rgb(fcols[fin])/255)[1], (col2rgb(fcols[fin])/255)[2], (col2rgb(fcols[fin])/255)[3], 0.1)
+        polygon(x, y, col=pcol)
+      }
+      
+      clip(1, length(j), 1, length(j))
+      abline(h=j, v=j, col="darkgray", lty=1, lwd=0.2)
+      
       dev.off()
     }
   }

@@ -89,13 +89,16 @@ modify-functions-anf = A.default-map-visitor.{
           let-args.reverse()))
 
       inc-count = A.s-assign(l, A.s-name(l, "xoxcx"), A.s-op(l, l, "op+", A.s-id(l, A.s-name(l, "xoxcx")), A.s-num(l, 1)))
-      count-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "cxaxp"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
+      start-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "sxtxr"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
+      stop-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "sxtxp"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
+
       addto-acc = A.s-assign(l, A.s-name(l, "dxaxt"), 
                     A.s-app(l, A.s-dot(l, A.s-id(l, A.s-name(l, "dxaxt")), "append"), 
                       [list: A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), 
                           [list: A.s-tuple(l, 
                               [list:
-                                A.s-id(l, A.s-name(l, "cxaxp")),
+                                A.s-id(l, A.s-name(l, "sxtxr")),
+                                A.s-id(l, A.s-name(l, "sxtxp")),
                                 A.s-id(l, A.s-name(l, f-id)), 
                                 A.s-str(l, function-name),
                                 A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids),
@@ -103,7 +106,7 @@ modify-functions-anf = A.default-map-visitor.{
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-id + "__out"))
 
-      anf-complete = [list: inc-count] + [list: count-capture] + in-and-out-rev.reverse() + [list: addto-acc] + [list: block-out]
+      anf-complete = [list: inc-count] + [list: start-capture] + in-and-out-rev.reverse() + [list: inc-count] + [list: stop-capture] + [list: addto-acc] + [list: block-out]
 
       A.s-user-block(l, A.s-block(l, anf-complete))
     end

@@ -40,7 +40,7 @@ fun collapse-indices(sp, names) block:
 	{sid; subid; appdata} = sp
 	fundict = [mutable-string-dict: ]
 	for each(ftuple from appdata):
-		{fpos; fid; fname; fin; fout} = ftuple
+		{fstart; fstop; fid; fname; fin; fout} = ftuple
 		name = if names:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 		else:

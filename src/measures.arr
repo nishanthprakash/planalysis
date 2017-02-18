@@ -10,13 +10,13 @@ fun justlist(sp, names) block:
 	{sid; subid; appdata} = sp
 	fnlist =
 	for map(ftuple from appdata):
-		{fpos; fid; fname; fin; fout} = ftuple
+		{fstart; fstop; fid; fname; fin; fout} = ftuple
 		name = if names:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 		else:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + num-to-string(fid) + ":" + fname
 		end
-		{fpos; name}
+		[list: fstart, fstop, name]
 	end
 	fnlist
 end
@@ -32,18 +32,13 @@ for each(collapsee from [list: true, false]) block:
 	F.output-file(measuresdir + "/" + num-to-string(file-counter) + "f" + "STF" + ".csv", false).display(
 		((justlist(A.dat, collapsee)
 			.sort-by(lam(x, y):
-				 		{pos1; nam1} = x 
-				 		{pos2; nam2} = y 
-				 		pos1 < pos2 
+				 		x.first < y.first 
 				 	end, 
 				 	lam(x, y): 
-				 		{pos1; nam1} = x 
-				 		{pos2; nam2} = y
-				 		pos1 == pos2  
+				 		x.first == y.first
 				 	end))
 			.map(lam(x):
-				 		{pos; nam} = x 
-				 		nam
+						x.join-str(", ")
 				 	end))
 			.join-str("\n"))
 end
