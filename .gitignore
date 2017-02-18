@@ -5,6 +5,7 @@ data/transformed
 data/anfdata
 data/distances
 data/measures
+data/plots
 src/experimental
 src/sdistances.arr
 src/smeasures.arr
