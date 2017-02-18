@@ -8,16 +8,13 @@ measuresdir = '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/data
 fun justlist(sp, names) block:
 	unnamed = [set: "lambda", "___"]
 	{sid; subid; appdata} = sp
-	fnlist = [list: ]
-	for fold(ftuple from appdata):
+	fnlist =
+	for map(ftuple from appdata):
 		{fid; fname; fin; fout} = ftuple
-		name = if names:
+		if names:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 		else:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + num-to-string(fid) + ":" + fname
-		end
-		when not(unnamed.member(fname)):
-			fnlist.append([list: name])
 		end
 	end
 	fnlist
@@ -29,8 +26,8 @@ when not(FL.exists(measuresdir)):
 end
 
 var file-counter = 0
-for each(collapsee from [list: true, false]):
+for each(collapsee from [list: true, false]) block:
 	file-counter := file-counter + 1
-	F.output-file(measuresdir + "/" + num-to-string(file-counter) + "f" + "STF" + ".csv", false).display((
+	F.output-file(measuresdir + "/" + num-to-string(file-counter) + "f" + "STF" + ".csv", false).display(
 		justlist(A.dat, collapsee).join-str("\n"))
 end
