@@ -78,16 +78,15 @@ for (mfn in mfns){
       axis(1, at=i1,labels=i2, pos=-5, las=2)
       axis(2, at=j,labels=j, pos=-5, las=2)
       
+      clip(-5, length(j), -5, length(j))
+      abline(h=j, v=j, col="darkgray", lty=1, lwd=0.2)
+      
       for (ind in 1:length(studfns[, 1])){
         fin = match(c(as.character(studfns[ind,3])), fs)
         x = c(studfns[ind,][1], studfns[ind,][1], studfns[ind,][2], studfns[ind,][2])
         y = c(studfns[ind,][1], studfns[ind,][2], studfns[ind,][2], studfns[ind,][1])
-        pcol = rgb((col2rgb(fcols[fin])/255)[1], (col2rgb(fcols[fin])/255)[2], (col2rgb(fcols[fin])/255)[3], 0.1)
-        polygon(x, y, col=pcol)
+        polygon(x, y, col=fcols[fin])
       }
-      
-      clip(1, length(j), 1, length(j))
-      abline(h=j, v=j, col="darkgray", lty=1, lwd=0.2)
       
       dev.off()
     }
