@@ -55,8 +55,8 @@ for (mfn in mfns){
   for (tc in mtcs){
     for (sub in msubs){
       studfns = read.csv(paste("./measures/", mfn, "f", sub, "_", tc, ".csv", sep=""), header=FALSE)
-      png(paste("./plots/order/", mfn, "f", sub, "_", tc,".png", sep=""), width=12,height=12,units="in", res=800)
-      par(cex=0.1, mar=c(15,3,3,3))
+      png(paste("./plots/order/", mfn, "f", sub, "_", tc,".png", sep=""), width=12,height=12,units="in", res=1000)
+      par(cex=0.1, mar=c(15,3,3,8))
       c13 = studfns[, c(1, 3)]
       c23 = studfns[, c(2, 3)]
       names(c13) = names(c23)
@@ -77,6 +77,9 @@ for (mfn in mfns){
       plot.window(xlim = range(j), ylim = range(j))
       axis(1, at=i1,labels=i2, pos=-5, las=2)
       axis(2, at=j,labels=j, pos=-5, las=2)
+      
+      par(xpd=TRUE, cex=0.5)
+      legend("top",legend=lapply(fs, function(x)as.character(x)), col=fcols, pch=15, pt.cex=5,  horiz=TRUE)
       
       clip(-5, length(j), -5, length(j))
       abline(h=j, v=j, col="darkgray", lty=1, lwd=0.2)
