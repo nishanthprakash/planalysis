@@ -43,10 +43,16 @@ for (dfn in dfns){
 for (mfn in mfns){
   for (tc in mtcs){
     counts = Reduce(function(accc, i) 
-      rbind(accc, read.csv(paste("./measures/", mfn, "f", i, "_", tc, ".csv", sep=""), header=FALSE)[3]), msubs)
+      rbind(accc, read.csv(paste("./measures/", mfn, "f", i, "_", tc, ".csv", sep=""), header=FALSE)[3]), c("", msubs))
     png(paste("./plots/counts/", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
     par(cex=0.4, mar=c(15,3,3,3)) 
-    barplot(table(counts), las = 2)
+    tabc = table(counts)
+    cous = lapply(1:length(tabc), function(i) tabc[[i]])
+    maxcou = cous[which.max(abs(as.numeric(cous)))]
+    barplot(tabc, las = 2, yaxt = "n")
+    ylabs = c(1:maxcou[[1]])
+    axis(2, at=ylabs,labels=ylabs, pos=-1, las=2, cex=0.4)
+    abline(h=ylabs, col="darkgray", lty=1, lwd=0.2)
     dev.off()
   }
 }

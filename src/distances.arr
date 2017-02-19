@@ -17,9 +17,9 @@ end,
 # Exactly equal
 lam(a, b):
 	if a == b:
-		1
-	else:
 		0
+	else:
+		1
 	end
 end
 
@@ -78,7 +78,7 @@ end
 var file-counter = 0
 
 for each(collapsee from [list: true, false]):
-	(correls-across(collapse-indices(A.dat, collapsee).freeze(), collapse-indices(B.dat, true).freeze())).each(lam(mat) block:
+	(correls-across(collapse-indices(A.dat, collapsee).freeze(), collapse-indices(B.dat, collapsee).freeze())).each(lam(mat) block:
 			file-counter := file-counter + 1
 			F.output-file(distancesdir + "/" + num-to-string(file-counter) + "f" + "STF1xSTF2" + ".csv", false).display((mat.map(lam(row): 
 				row.join-str(", ") end)).join-str("\n"))
