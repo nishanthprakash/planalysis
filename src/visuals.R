@@ -43,7 +43,7 @@ for (dfn in dfns){
 for (mfn in mfns){
   for (tc in mtcs){
     counts = Reduce(function(accc, i) 
-      rbind(accc, read.csv(paste("./measures/", mfn, "f", i, "_", tc, ".csv", sep="")[3], header=FALSE)), msubs)
+      rbind(accc, read.csv(paste("./measures/", mfn, "f", i, "_", tc, ".csv", sep=""), header=FALSE)[3]), msubs)
     png(paste("./plots/counts/", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
     par(cex=0.4, mar=c(15,3,3,3)) 
     barplot(table(counts), las = 2)

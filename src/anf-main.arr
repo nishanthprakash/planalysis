@@ -80,13 +80,12 @@ modify-functions-anf = A.default-map-visitor.{
 	      	| else => "lambda"
 	      end
 
-      in-and-out-rev = (link( 
-          A.s-let(l, 
-            A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
-            A.s-app(l, 
-              _fun.visit(self), 
-              list-argids), false), 
-          let-args.reverse()))
+      in-and-out-rev =  A.s-let(l, 
+                          A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
+                          A.s-app(l, 
+                            _fun.visit(self), 
+                            list-argids), false) 
+          
 
       inc-count = A.s-assign(l, A.s-name(l, "xoxcx"), A.s-op(l, l, "op+", A.s-id(l, A.s-name(l, "xoxcx")), A.s-num(l, 1)))
       start-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "sxtxr"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
@@ -106,7 +105,7 @@ modify-functions-anf = A.default-map-visitor.{
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-id + "__out"))
 
-      anf-complete = [list: inc-count] + [list: start-capture] + in-and-out-rev.reverse() + [list: inc-count] + [list: stop-capture] + [list: addto-acc] + [list: block-out]
+      anf-complete = let-args + [list: inc-count] + [list: start-capture] + [list: in-and-out-rev] + [list: inc-count] + [list: stop-capture] + [list: addto-acc] + [list: block-out]
 
       A.s-user-block(l, A.s-block(l, anf-complete))
     end
