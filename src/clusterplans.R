@@ -16,32 +16,35 @@ for (mfn in mfns){
     for (sub in msubs){
       fn = list()
       sfs = read.csv(paste("./measures/", mfn, "f", sub, "_", tc, ".csv", sep=""), header=FALSE)
+      for (i in 1:length(sfs[, 1])){ sfs[i,4] = TRUE}
       for(i in 1:length(sfs[, 1])){
-        fint = fn[[as.character(sfs[i, 3])]]
-        if(is.null(fint) || ((sfs[i, 2] - sfs[i, 1]) > (fint[2] - fint[1]))) {
-          fn[[as.character(sfs[i, 3])]] = c(sfs[i, 1], sfs[i, 2])
-        }
-      }
-      
-      # note that the data is already sorted by start pos of functions
-      for (i in 1:length(fn)){ fn[[i]][3] = TRUE}
-      #fn[[1]][3] = TRUE
-      for (i in 1:length(fn)){
-        for (j in i:length(fn)){
+        for(j in i:length(sfs[, 1])){
           if (j > i){
-            if ((fn[[j]][1] < fn[[i]][2]) && (fn[[j]][1] > fn[[i]][1])){
-              fn[[j]][3] = FALSE
+            if ((sfs[j,1] < sfs[i,2]) && (sfs[j,1] > sfs[i,1])){
+              sfs[j,4] = FALSE
             }
           }
         }
       }
       
-      disj[[sub]] = Filter(function(x) x[3], fn)
+      disj[[sub]] = subset(sfs, V4)[, 1:3]
       
       max = sfs[[2]][which.max(abs(as.numeric(sfs[[2]])))]
       len = length(disj[[sub]])
-      maxints = if (maxints < len) len else maxints
+      #maxints = if (maxints < len) len else maxints
     }
-    
+    m = NULL
+    maxints = 0
+    for(i in 1:length(disj)){ 
+      maxints = if (maxints < length(disj[[i]][1:2][,1])) length(disj[[i]][1:2][,1]) else maxints
+    }
+    for(i in 1:length(disj)){
+      disjel = as.vector(t(disj[[i]][1:2])) - 1
+      disjel = disjel/tail(disjel, n=1)
+      m = rbind(m, c(disjel, rep(1, 2*maxints - length(disjel))))
+    }
+    #png(paste("./plots/planclusters/", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
+    plot(hclust(dist(m)))
+    #dev.off()
   }
 }
