@@ -85,7 +85,7 @@ for (mfn in mfns){
       axis(2, at=j,labels=j, pos=-5, las=2)
       
       par(xpd=TRUE, cex=0.5)
-      legend("top",legend=lapply(fs, function(x)as.character(x)), col=fcols, pch=15, pt.cex=5,  horiz=TRUE)
+      legend("top",legend=lapply(fs, function(x) as.character(x)), col=fcols, pch=15, pt.cex=5,  horiz=TRUE)
       
       clip(-5, length(j), -5, length(j))
       abline(h=j, v=j, col="darkgray", lty=1, lwd=0.2)
