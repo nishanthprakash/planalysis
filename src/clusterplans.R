@@ -2,6 +2,17 @@ library(moments)
 
 setwd("~/Projects/Plan Composition/pyret-starter/planalysis/data")
 
+# function to get color labels
+colLab <- function(n) {
+  if (is.leaf(n)) {
+    a <- attributes(n)
+    labCol <- labelColors[clusMember[which(names(clusMember) == a$label)]]
+    attr(n, "nodePar") <- c(a$nodePar, lab.col = labCol)
+  }
+  n
+}
+
+
 mfs = list.files(path = "./measures/")
 mfs1 = unique(lapply(mfs, function (i) strsplit(i, "f")[[1]]))
 mfns <<- unique(lapply(mfs1, function (i) i[1]))
@@ -106,6 +117,20 @@ for (mfn in mfns){
     row.names(n4) = names(disj)
     plot.new()
     plot(hclust(dist(n4)))
+    dev.off()
+    
+    
+    # The final magnifica:
+    hcc = hclust(sqrt(dist(n4)^2 + dist(n3)^2))
+    hcd = as.dendrogram(hcc)
+    clusMember = cutree(hcc, h=1.3)
+    labelColors = rainbow(length(unique(clusMember)))
+    clusDendro = dendrapply(hcd, colLab)
+
+    png(paste("./plots/planclusters/ulti_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
+    row.names(n4) = names(disj)
+    plot.new()
+    plot(clusDendro)
     dev.off()
   }
 }
