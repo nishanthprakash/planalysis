@@ -35,17 +35,36 @@ modify-functions-anf = A.default-map-visitor.{
 
   method s-app(self, l, _fun, args):
     block:
+      var isdotobj = false
+      var dotobj = none
+      var let-args = empty
       function-counter := function-counter + 1
 
       f-id = num-to-string(function-counter)
       fs-len = string-length(f-id)
+
+      function-name = 
+        cases(A.Expr) _fun:
+          | s-id(loc, f-name) =>  
+            cases(A.Name) f-name:
+              | s-name(loctn, f-str) => f-str
+              | else => "___"
+            end
+          | s-dot(ll, aa, bb) => 
+            block:
+              isdotobj := true
+              dotobj := aa
+              bb
+            end
+          | else => "lambda"
+        end
 
       # Have to remove and put back each i/p argument separately as the arglist is not a list in the program runtime 
       # (the list cant be directly captured, thought it could probably be splat into i/p list of the funtion)
       # Besides, more importantly, the args need to be eval'd only once (incase they have side effects)
       # got to collect the output too, there is no way to torepr the in-out anf tuple before execution
 
-      let-args = args.foldr(
+      let-args := args.foldr(
         lam(x, y):
           cases(List) y:
             | empty => link(A.s-let(l, A.s-bind(l, false, A.s-name(l,  "_" + f-id + "__in_1"), A.a-blank), x.visit(self), false), y)
@@ -55,6 +74,10 @@ modify-functions-anf = A.default-map-visitor.{
               link(A.s-let(l, A.s-bind(l, false, A.s-name(l, arg-name), A.a-blank), x.visit(self), false), y)  
           end
         end, empty)
+
+      when isdotobj:
+        let-args := link(A.s-let(l, A.s-bind(l, false, A.s-name(l,  "_" + f-id + "__obj"), A.a-blank), dotobj.visit(self), false), let-args)
+      end 
 
       # Reverse orders of arg evals, check if it matters
 
@@ -69,22 +92,20 @@ modify-functions-anf = A.default-map-visitor.{
           end
         end, empty)
 
-      function-name = 
-	      cases(A.Expr) _fun:
-	      	| s-id(loc, f-name) => 	
-	      		cases(A.Name) f-name:
-	      			| s-name(loctn, f-str) => f-str
-	      			| else => "___"
-	      		end
-	      	| s-dot(ll, aa, bb) => bb
-	      	| else => "lambda"
-	      end
-
-      in-and-out-rev =  A.s-let(l, 
-                          A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
-                          A.s-app(l, 
-                            _fun.visit(self), 
-                            list-argids), false) 
+      in-and-out-rev =
+        if not(isdotobj):  
+          A.s-let(l, 
+              A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
+              A.s-app(l, 
+                _fun.visit(self), 
+                list-argids), false)
+        else:
+          A.s-let(l, 
+              A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
+              A.s-app(l, 
+                A.s-dot(l, A.s-id(l, A.s-name(l, "_" + f-id + "__obj")), function-name), 
+                list-argids), false)
+        end
           
 
       inc-count = A.s-assign(l, A.s-name(l, "xoxcx"), A.s-op(l, l, "op+", A.s-id(l, A.s-name(l, "xoxcx")), A.s-num(l, 1)))
@@ -101,7 +122,12 @@ modify-functions-anf = A.default-map-visitor.{
                                 A.s-id(l, A.s-name(l, f-id)), 
                                 A.s-str(l, function-name),
                                 A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids),
-                                A.s-id(l, A.s-name(l, "_" + f-id + "__out"))])])]))
+                                A.s-id(l, A.s-name(l, "_" + f-id + "__out")),
+                                if isdotobj:
+                                  A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))
+                                else:
+                                  A.s-id(l, A.s-name(l, "none"))
+                                end])])]))
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-id + "__out"))
 

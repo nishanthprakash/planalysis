@@ -10,7 +10,7 @@ fun justlist(sp, names) block:
 	{sid; subid; appdata} = sp
 	fnlist =
 	for map(ftuple from appdata):
-		{fstart; fstop; fid; fname; fin; fout} = ftuple
+		{fstart; fstop; fid; fname; fin; fout; fobj} = ftuple
 		name = if names:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 		else:

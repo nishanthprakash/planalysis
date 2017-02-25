@@ -40,7 +40,7 @@ fun collapse-indices(sp, names) block:
 	{sid; subid; appdata} = sp
 	fundict = [mutable-string-dict: ]
 	for each(ftuple from appdata):
-		{fstart; fstop; fid; fname; fin; fout} = ftuple
+		{fstart; fstop; fid; fname; fin; fout; fobj} = ftuple
 		name = if names:
 			num-to-string(sid) + ":" + num-to-string(subid) + ":" + fname
 		else:
@@ -48,9 +48,9 @@ fun collapse-indices(sp, names) block:
 		end
 		when not(unnamed.member(fname)): ## leaving out fns whose name cannot be known 
 			if fundict.has-key-now(name):
-				fundict.set-now(name, fundict.get-value-now(name).append([list: {fin; fout}]))
+				fundict.set-now(name, fundict.get-value-now(name).append([list: {fin; fout; fobj}]))
 			else:
-				fundict.set-now(name, [list: {fin; fout}])
+				fundict.set-now(name, [list: {fin; fout; fobj}])
 			end
 		end
 	end
