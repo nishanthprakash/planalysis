@@ -10,11 +10,22 @@ base = (C.args).first
 stud-data-dir = base + "/student-codes"
 
 stud-repos = FL.list-files(stud-data-dir)
+
+lists-file = base + "/code-stubs/lists.arr"
+
 two-submissions = [list: "earthquake-1.arr", "earthquake-2.arr"]
 
 var function-counter = 0
 
 var datadefs = ""
+
+# --------- shadow declares ----------
+
+modify-functions-anf = A.default-map-visitor.{
+
+}
+
+
 
 # -------------- ANF ----------------
 
@@ -209,7 +220,12 @@ for each(stud-dir from stud-repos):
         student-file-out-pre = fs-out-dir + "/" + stud-sub
         student-file-out-anf = string-replace(student-file-out-pre, ".arr", "-anf.arr")
 
-        p = SP.surface-parse(F.input-file(student-file).read-file(), "test-file.arr")
+        plst = SP.surface-parse(F.input-file(lists-file).read-file(), "list-file.arr")
+
+        modified-plst = plst.visit(modify-declares)
+        as-string-plst = modified-plst.tosource().pretty(80).join-str("\n")
+        toparse = string-replace("provide *" + "\n\n" + as-string-plst + "\n\n" + F.input-file(student-file).read-file(), "provide *", "")
+        p = SP.surface-parse(toparse, "test-file.arr")
 
         modified-anf = p.visit(modify-functions-anf)
         as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
@@ -231,7 +247,7 @@ xoxcx := 0
         end
 
         # appending data to prevent order dependency
-        final-string-anf = 
+        final-string-anf = string-replace(as-string-anf, "#INSERTIMPORTS", 
 ```
 import file as xFx
 
@@ -240,8 +256,8 @@ import filelib as xFLx
 var dxaxt = empty
 var xoxcx = 0
 
-``` 
-  + string-replace("provide *" + "\n\n" + as-string-anf, "provide *", "") +  "\n\n" +
+```)
+ +  "\n\n" +
 
 ```
 block:
