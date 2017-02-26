@@ -19,13 +19,6 @@ var function-counter = 0
 
 var datadefs = ""
 
-# --------- shadow declares ----------
-
-modify-functions-anf = A.default-map-visitor.{
-
-}
-
-
 
 # -------------- ANF ----------------
 
@@ -220,11 +213,9 @@ for each(stud-dir from stud-repos):
         student-file-out-pre = fs-out-dir + "/" + stud-sub
         student-file-out-anf = string-replace(student-file-out-pre, ".arr", "-anf.arr")
 
-        plst = SP.surface-parse(F.input-file(lists-file).read-file(), "list-file.arr")
+        plst = F.input-file(lists-file).read-file()
 
-        modified-plst = plst.visit(modify-declares)
-        as-string-plst = modified-plst.tosource().pretty(80).join-str("\n")
-        toparse = string-replace("provide *" + "\n\n" + as-string-plst + "\n\n" + F.input-file(student-file).read-file(), "provide *", "")
+        toparse = string-replace("provide *" + "\n\n" + plst + "\n\n" + F.input-file(student-file).read-file(), "provide *", "")
         p = SP.surface-parse(toparse, "test-file.arr")
 
         modified-anf = p.visit(modify-functions-anf)
