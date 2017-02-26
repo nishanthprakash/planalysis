@@ -19,6 +19,7 @@ var function-counter = 0
 
 var datadefs = ""
 
+funcs = [list-set: "reverse", "sort-by", "sort", "filter", "partition", "find", "split-at", "map", "each", "fold", "foldl", "foldr"]
 
 # -------------- ANF ----------------
 
@@ -104,11 +105,25 @@ modify-functions-anf = A.default-map-visitor.{
                 _fun.visit(self), 
                 list-argids), false)
         else:
-          A.s-let(l, 
+          if function-name == "sort-by":
+            A.s-let(l, 
+              A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
+              A.s-app(l, 
+                function-name, 
+                [list: A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))] + list-argids), false)
+          else if funcs.member(function-name):
+            A.s-let(l, 
+              A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
+              A.s-app(l, 
+                function-name, 
+                list-argids + [list: A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))]), false)
+          else:
+            A.s-let(l, 
               A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
               A.s-app(l, 
                 A.s-dot(l, A.s-id(l, A.s-name(l, "_" + f-id + "__obj")), function-name), 
                 list-argids), false)
+          end
         end
           
 
