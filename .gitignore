@@ -1,12 +1,4 @@
 **/.DS_Store
-bin
-data/student-codes
-data/transformed
-data/anfdata
-data/distances
-data/measures
-data/plots
-src/experimental
 src/sdistances.arr
 src/smeasures.arr
 *.jarr
