@@ -49,9 +49,9 @@ distances:
 	for tes in $(tests) ; do \
 		for ana1 in $(anas) ; do \
 			for ana2 in $(anas) ; do \
-				sed "s#STF1#$$ana1\_$$tes#g" ./planalysis/src/distances.arr | sed "s#STF2#$$ana2\_$$tes#g" > ./planalysis/src/sdistances.arr ; \
-			    node_modules/.bin/pyret ./planalysis/src/sdistances.arr ; \
-			    node ./planalysis/src/sdistances.arr.jarr ; \
+				sed "s#STF1#$$ana1\_$$tes#g" '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/src/distances.arr' | sed "s#STF2#$$ana2\_$$tes#g" > '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/src/sdistances.arr' ; \
+				$(call pyret, '../Plan Composition/pyret-starter/planalysis/src/sdistances.arr', '../Plan Composition/pyret-starter/planalysis/bin/sdistances.arr.jarr') ; \
+			    node '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/bin/sdistances.arr.jarr' ; \
 			done \
 		done \
 	done
@@ -60,15 +60,15 @@ measures:
 	-rm -rf '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/data/measures'
 	for tes in $(tests) ; do \
 		for ana in $(anas) ; do \
-				sed "s#STF#$$ana\_$$tes#g" ./planalysis/src/measures.arr > ./planalysis/src/smeasures.arr ; \
-			    node_modules/.bin/pyret ./planalysis/src/smeasures.arr ; \
-			    node ./planalysis/src/smeasures.arr.jarr ; \
+				sed "s#STF#$$ana\_$$tes#g" '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/src/measures.arr' > '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/src/smeasures.arr' ; \
+			    $(call pyret, '../Plan Composition/pyret-starter/planalysis/src/smeasures.arr', '../Plan Composition/pyret-starter/planalysis/bin/smeasures.arr.jarr') ; \
+			    node '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/bin/smeasures.arr.jarr' ; \
 		done \
 	done
 
 plots:
-	Rscript ./planalysis/src/visuals.R
-	Rscript ./planalysis/src/clusterplans.R
+	Rscript ./src/visuals.R
+	Rscript ./src/clusterplans.R
 
 cleanall: cleansrc cleanobj	cleanout
 

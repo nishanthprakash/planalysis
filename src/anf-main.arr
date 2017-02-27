@@ -109,13 +109,13 @@ modify-functions-anf = A.default-map-visitor.{
             A.s-let(l, 
               A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
               A.s-app(l, 
-                function-name, 
+                A.s-id(l, A.s-name(l, function-name)), 
                 [list: A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))] + list-argids), false)
           else if funcs.member(function-name):
             A.s-let(l, 
               A.s-bind(l, false, A.s-name(l, "_" + f-id + "__out"), A.a-blank), 
               A.s-app(l, 
-                function-name, 
+                A.s-id(l, A.s-name(l, function-name)), 
                 list-argids + [list: A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))]), false)
           else:
             A.s-let(l, 
@@ -230,7 +230,7 @@ for each(stud-dir from stud-repos):
 
         plst = F.input-file(lists-file).read-file()
 
-        toparse = string-replace("provide *" + "\n\n" + plst + "\n\n" + F.input-file(student-file).read-file(), "provide *", "")
+        toparse = string-replace("provide *" + "\n\n" + string-replace(plst, "#INSERTIMPORTS", "import file as xFx\n\nimport filelib as xFLx\n\nvar dxaxt = empty\n\nvar xoxcx = 0") + "\n\n" + F.input-file(student-file).read-file(), "provide *", "")
         p = SP.surface-parse(toparse, "test-file.arr")
 
         modified-anf = p.visit(modify-functions-anf)
@@ -253,17 +253,7 @@ xoxcx := 0
         end
 
         # appending data to prevent order dependency
-        final-string-anf = string-replace(as-string-anf, "#INSERTIMPORTS", 
-```
-import file as xFx
-
-import filelib as xFLx
-
-var dxaxt = empty
-var xoxcx = 0
-
-```)
- +  "\n\n" +
+        final-string-anf = as-string-anf +  "\n\n" +
 
 ```
 block:
