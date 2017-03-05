@@ -5,20 +5,9 @@ import filelib as FL
 import file('../data/tests/anf-checks.arr') as anf-checks
 import cmdline as C
 
-base = (C.args).first
-
-stud-data-dir = base + "/student-codes"
-
-stud-repos = FL.list-files(stud-data-dir)
-
-lists-file = base + "/code-stubs/lists.arr"
-
-two-submissions = [list: "earthquake-1.arr", "earthquake-2.arr"]
 
 var function-counter = 0
-
 var datadefs = ""
-
 funcs = [list-set: "reverse", "sort-by", "sort", "filter", "partition", "find", "split-at", "map", "each", "fold", "foldl", "foldr"]
 
 # -------------- ANF ----------------
@@ -197,63 +186,67 @@ modify-functions-anf = A.default-map-visitor.{
 
 # ------------------------------------------
 
-transform-dir = base + "/transformed"
+stud-sub = (C.args).first
 
+bpathstr = string-split(stud-sub, "/student-codes/")
+base = bpathstr.first
+
+file-to-write = string-replace(stud-sub, "student-codes", "transformed")
+tpathstr = string-split(file-to-write, "/final-submission/")
+studtrans-dir = tpathstr.first
+studsubflname = tpathstr.last()
+
+stud-dir = string-split(studtrans-dir, "transformed/").last()
+
+lists-file = base + "/code-stubs/lists.arr"
+
+transform-dir = base + "/transformed"
 when not(FL.exists(transform-dir)):
   FL.create-dir(transform-dir)
+end
+fs-out-dir =  studtrans-dir + "/final-submission"
+when not(FL.exists(studtrans-dir)):
+  FL.create-dir(studtrans-dir)
+end
+when not(FL.exists(fs-out-dir)):
+    FL.create-dir(fs-out-dir)
 end
 
 var blockstr = 0
 var tind = 0
 
-for each(stud-dir from stud-repos):
-  block:
-    student-file-pre = stud-data-dir + "/" + stud-dir + "/final-submission"
+block:
+	datadefs := ""
+  function-counter := 0
 
-    studtrans-dir = transform-dir + "/" + stud-dir
-    fs-out-dir =  studtrans-dir + "/final-submission"
-    when not(FL.exists(studtrans-dir)):
-      FL.create-dir(studtrans-dir)
-    end
-    when not(FL.exists(fs-out-dir)):
-        FL.create-dir(fs-out-dir)
-    end
+  student-file-out-anf = string-replace(file-to-write, ".arr", "-anf.arr")
 
-    for each(stud-sub from two-submissions):
-      
-      block:
-      	datadefs := ""
-        function-counter := 0
-        student-file = student-file-pre + "/" + stud-sub
-        student-file-out-pre = fs-out-dir + "/" + stud-sub
-        student-file-out-anf = string-replace(student-file-out-pre, ".arr", "-anf.arr")
+  plst = F.input-file(lists-file).read-file()
 
-        plst = F.input-file(lists-file).read-file()
+  toparse = string-replace("provide *" + "\n\n" + string-replace(plst, "#INSERTIMPORTS", "import file as xFx\n\nimport filelib as xFLx\n\nvar dxaxt = empty\n\nvar xoxcx = 0") + "\n\n" + F.input-file(stud-sub).read-file(), "provide *", "")
+  p = SP.surface-parse(toparse, "test-file.arr")
 
-        toparse = string-replace("provide *" + "\n\n" + string-replace(plst, "#INSERTIMPORTS", "import file as xFx\n\nimport filelib as xFLx\n\nvar dxaxt = empty\n\nvar xoxcx = 0") + "\n\n" + F.input-file(student-file).read-file(), "provide *", "")
-        p = SP.surface-parse(toparse, "test-file.arr")
+  modified-anf = p.visit(modify-functions-anf)
+  as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
 
-        modified-anf = p.visit(modify-functions-anf)
-        as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
+  tind := 0
+  blockstr := ""
+  for each(test from anf-checks.ins) block:
+    tind := tind + 1
 
-        tind := 0
-        blockstr := ""
-        for each(test from anf-checks.ins) block:
-          tind := tind + 1
-
-          blockstr := blockstr + 
+    blockstr := blockstr + 
 ```
 dxaxt := empty
 xoxcx := 0
 ``` 
 + "\n\n" + test + "\n\n" +
 
-'xFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(stud-sub, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(stud-sub, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\""))' + "\n\n"
+'xFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(studsubflname, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(studsubflname, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\""))' + "\n\n"
 
-        end
+  end
 
-        # appending data to prevent order dependency
-        final-string-anf = as-string-anf +  "\n\n" +
+  # appending data to prevent order dependency
+  final-string-anf = as-string-anf +  "\n\n" +
 
 ```
 block:
@@ -261,17 +254,13 @@ block:
 + "\n\n" + 
 ```
 when not(xFLx.exists("``` + base + "/anfdata" + ```")):
-  xFLx.create-dir("``` + base + "/anfdata" + ```") 
+xFLx.create-dir("``` + base + "/anfdata" + ```") 
 end
 ```  
 + "\n\n" + blockstr
 
 + '\n\nnothing\n\nend'
 
-        F.output-file(student-file-out-anf, false).display(final-string-anf)
+  F.output-file(student-file-out-anf, false).display(final-string-anf)
 
-      end
-
-    end
-  end
 end
