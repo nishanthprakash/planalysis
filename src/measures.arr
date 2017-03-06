@@ -3,7 +3,7 @@ import filelib as FL
 include string-dict
 import file('../data/anfdata/STF.arr') as A
 
-measuresdir = '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/data/measures'
+measuresdir = '/Users/np/Projects/Plan Composition/planalysis/data/measures'
 
 fun justlist(sp, names) block:
 	unnamed = [set: "lambda", "___"]

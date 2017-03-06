@@ -1,4 +1,4 @@
-setwd("~/Projects/Plan Composition/pyret-starter/planalysis/data")
+setwd("~/Projects/Plan Composition/planalysis/data")
 
 dir.create(file.path('.', 'plots2'), showWarnings = FALSE)
 
@@ -9,6 +9,7 @@ mfs2 = unique(lapply(mfs1, function (i) strsplit(i[2], "_")[[1]]))
 msubs <<- unique(lapply(mfs2, function (i) i[1]))
 mtcs <<- unique(lapply(mfs2, function (i) strsplit(i[2], "[.]")[[1]][1]))
 
+unlink(file.path('.', 'plots2/order'), recursive = TRUE, force = FALSE)
 dir.create(file.path('.', 'plots2/order'), showWarnings = FALSE)
 
 for (mfn in mfns){
@@ -111,113 +112,7 @@ for (mfn in mfns){
       }
       
       dev.off()
-      
-      #---------------------------------------------------
-      
-      disj[[sub]] = finalfns
-      
-      max = finalfns[[2]][which.max(abs(as.numeric(finalfns[[2]])))]
-      len = length(disj[[sub]])
     }
-    #break 
-    m = NULL
-    maxints = 0
-    for(i in 1:length(disj)){ 
-      maxints = if (maxints < length(disj[[i]][1:2][,1])) length(disj[[i]][1:2][,1]) else maxints
-    }
-    for(i in 1:length(disj)){
-      disjel = as.vector(t(disj[[i]][1:2])) - 1
-      disjel = disjel/tail(disjel, n=1)
-      m = rbind(m, c(disjel, rep(1, 2*maxints - length(disjel))))
-    }
-    png(paste("./plots2/planclusters/int_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(m) = names(disj)
-    plot.new()
-    plot(hclust(dist(m)))
-    dev.off()
-    
-    n1 = NULL
-    n2 = NULL
-    n3 = NULL
-    n4 = NULL
-    for(i in 1:length(disj)){
-      maxpos = tail(disj[[i]], n=1)[[2]] - 1
-      disj[[i]] = (disj[[i]]-1)/maxpos
-      
-      countint = length(disj[[i]][[1]])
-      startend = disj[[i]][[2]] - disj[[i]][[1]]
-      center = (disj[[i]][[2]] + disj[[i]][[1]])/2
-      
-      startmean = mean(disj[[i]][[1]])
-      endmean = mean(disj[[i]][[2]])
-      lengthmean = mean(startend)
-      centermean = mean(center)
-      
-      startdev = sd(disj[[i]][[1]])
-      enddev = sd(disj[[i]][[2]])
-      lengthdev = sd(startend)
-      centerdev = sd(center)
-      
-      startsk = skewness(disj[[i]][[1]])
-      endsk = skewness(disj[[i]][[2]])
-      lengthsk = skewness(startend)
-      centersk = skewness(center)
-      
-      startku = kurtosis(disj[[i]][[1]])
-      endku = kurtosis(disj[[i]][[2]])
-      lengthku = kurtosis(startend)
-      centerku = kurtosis(center)
-      
-      n0 = rbind(n0, c(startmean, endmean, lengthmean, centermean, startdev, enddev, lengthdev, centerdev, startsk, endsk, lengthsk, centersk, startku, endku, lengthku, centerku))
-      n1 = rbind(n1, c(startmean, endmean, lengthmean, startdev, enddev, lengthdev, startsk, endsk, lengthsk, startku, endku, lengthku))
-      n2 = rbind(n2, c(startmean, endmean, lengthmean, startdev, enddev, lengthdev, startsk, endsk, lengthsk))
-      n3 = rbind(n3, c(startmean, endmean, lengthmean, startdev, enddev, lengthdev))
-      n4 = rbind(n4, countint)
-    }
-    png(paste("./plots2/planclusters/stat0_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n0) = names(disj)
-    plot.new()
-    plot(hclust(dist(n0)))
-    dev.off()
-    
-    png(paste("./plots2/planclusters/stat1_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n1) = names(disj)
-    plot.new()
-    plot(hclust(dist(n1)))
-    dev.off()
-    
-    png(paste("./plots2/planclusters/stat2_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n2) = names(disj)
-    plot.new()
-    plot(hclust(dist(n2)))
-    dev.off()
-    
-    png(paste("./plots2/planclusters/stat3_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n3) = names(disj)
-    plot.new()
-    plot(hclust(dist(n3)))
-    dev.off()
-    
-    png(paste("./plots2/planclusters/stat4_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n4) = names(disj)
-    plot.new()
-    plot(hclust(dist(n4)))
-    dev.off()
-    
-    
-    # The final magnifica:
-    hcc = hclust(sqrt(dist(n4)^2 + dist(n3)^2))
-    hcd = as.dendrogram(hcc)
-    clusMember = cutree(hcc, h=1.3)
-    labelColors = rainbow(length(unique(clusMember)))
-    clusDendro = dendrapply(hcd, colLab)
-    
-    png(paste("./plots2/planclusters/ulti_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n4) = names(disj)
-    plot.new()
-    plot(clusDendro)
-    dev.off()
-      
   }
   break
 }

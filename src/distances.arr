@@ -4,7 +4,7 @@ include string-dict
 import file('../data/anfdata/STF1.arr') as A
 import file('../data/anfdata/STF2.arr') as B
 
-distancesdir = '/Users/np/Projects/Plan Composition/pyret-starter/planalysis/data/distances'
+distancesdir = '/Users/np/Projects/Plan Composition/planalysis/data/distances'
 
 distancefuns = 
 [list:

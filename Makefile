@@ -5,10 +5,6 @@ studs := $(wildcard $(data)/student-codes/*)
 srcs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr))
 objs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr.jarr))
 
-tstuds := $(wildcard $(data)/transformed/*)
-tsrcs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr))
-tobjs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr.jarr))
-
 rebuild:
 	-rm -rf node_modules
 	-rm -rf compiled
@@ -16,7 +12,7 @@ rebuild:
 	-rm .pyret-parley.1705.*
 	npm install
 
-pyret = cd $(pyret-base) && node build/phaseA/pyret.jarr \
+pyret = cd $(pyret-base) && gtimeout 2500 node build/phaseA/pyret.jarr \
     --build-runnable $(1)  \
     --outfile $(2) \
     --builtin-js-dir src/js/trove \
@@ -35,6 +31,10 @@ transform:
 	for src in $(srcs) ; do \
 		node "/Users/np/Projects/Plan Composition/planalysis/bin/anf-main.arr.jarr" "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
 	done
+
+tstuds := $(wildcard $(data)/transformed/*)
+tsrcs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr))
+tobjs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr.jarr))
 
 execute:
 	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/anfdata'

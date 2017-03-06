@@ -1,8 +1,7 @@
 library(moments)
 
-setwd("~/Projects/Plan Composition/pyret-starter/planalysis/data")
+setwd("~/Projects/Plan Composition/planalysis/data")
 
-unlink(file.path('.', 'plots2'), recursive = TRUE, force = FALSE)
 dir.create(file.path('.', 'plots2'), showWarnings = FALSE)
 
 mfs = list.files(path = "./measures/")
@@ -11,8 +10,6 @@ mfns <<- unique(lapply(mfs1, function (i) i[1]))
 mfs2 = unique(lapply(mfs1, function (i) strsplit(i[2], "_")[[1]]))
 msubs <<- unique(lapply(mfs2, function (i) i[1]))
 mtcs <<- unique(lapply(mfs2, function (i) strsplit(i[2], "[.]")[[1]][1]))
-
-dir.create(file.path('.', 'plots2/order'), showWarnings = FALSE)
 
 unlink(file.path('.', 'plots2/planclusters'), recursive = TRUE, force = FALSE)
 dir.create(file.path('.', 'plots2/planclusters'), showWarnings = FALSE)
@@ -141,32 +138,41 @@ for (mfn in mfns){
       n3 = rbind(n3, c(startmean, endmean, lengthmean, startdev, enddev, lengthdev))
       n4 = rbind(n4, countint)
     }
-    png(paste("./plots2/planclusters/stat0_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
+    
     row.names(n0) = names(disj)
+    row.names(n1) = names(disj)
+    row.names(n2) = names(disj)
+    row.names(n3) = names(disj)
+    row.names(n4) = names(disj)
+    
+    n0 = n0[complete.cases(n0),]
+    n1 = n1[complete.cases(n1),]
+    n2 = n2[complete.cases(n2),]
+    n3 = n3[complete.cases(n3),]
+    n4 = n4[complete.cases(n4),]
+    
+    png(paste("./plots2/planclusters/stat0_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
     plot.new()
+    par(xpd=TRUE, cex=0.8)
     plot(hclust(dist(n0)))
     dev.off()
     
     png(paste("./plots2/planclusters/stat1_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n1) = names(disj)
     plot.new()
     plot(hclust(dist(n1)))
     dev.off()
     
     png(paste("./plots2/planclusters/stat2_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n2) = names(disj)
     plot.new()
     plot(hclust(dist(n2)))
     dev.off()
     
     png(paste("./plots2/planclusters/stat3_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n3) = names(disj)
     plot.new()
     plot(hclust(dist(n3)))
     dev.off()
     
     png(paste("./plots2/planclusters/stat4_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n4) = names(disj)
     plot.new()
     plot(hclust(dist(n4)))
     dev.off()
@@ -174,7 +180,6 @@ for (mfn in mfns){
     
     # The final magnifica:
     png(paste("./plots2/planclusters/ulti_", mfn, "-", tc,".png", sep=""), width=12,height=6,units="in", res=800)
-    row.names(n4) = names(disj)
     plot.new()
     plot(hclust(sqrt(dist(n4)^2 + dist(n3)^2)))
     dev.off()
