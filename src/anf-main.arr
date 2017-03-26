@@ -145,9 +145,17 @@ modify-functions-anf = A.default-map-visitor.{
     end
   end,
 
-  method s-check(self, l, name, body, keyword-check):
-    nothing
-  end
+  # Remove check statements
+  method s-program(self, loc, _provide, provided-types, imports, body):
+    st = filter(lam(x): 
+        cases(A.Expr) x:
+          | s-check(l, n, b, k) => false
+          | else => true
+        end
+        end, body.stmts)
+    
+    A.s-program(loc, _provide.visit(self), provided-types.visit(self), imports.map(_.visit(self)), (A.s-block(loc, st)).visit(self))
+  end,
 }
 
 # ------------------------------------------
