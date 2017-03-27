@@ -4,11 +4,36 @@ import file as F
 import filelib as FL
 import file('../data/tests/anf-checks.arr') as anf-checks
 import cmdline as C
+import string-dict as D
+
+
+options = [D.string-dict:
+  "p",
+      C.flag(C.once, "Transform programs to output anfdata in .arr format"), 
+  "src",
+      C.next-val(C.String, C.once, "The path to the program to be transformed")
+]
+
+params-parsed = C.parse-args(options, C.args)
+
+var json-out = true
+var stud-sub = ""
+
+cases(C.ParsedArguments) params-parsed block:
+  | success(r, rest) => 
+    json-out := if r.has-key("p"): false else: true end
+    stud-sub := r.get-value("src")
+    nothing
+  | arg-error(message, partial) =>
+    print(message + "\n")
+    print(C.usage-info(options).join-str("\n"))
+end
 
 
 var function-counter = 0
 var datadefs = ""
 funcs = [list-set: "reverse", "sort-by", "sort", "filter", "partition", "find", "split-at", "map", "each", "fold", "foldl", "foldr"]
+
 
 # -------------- ANF ----------------
 
@@ -116,14 +141,21 @@ modify-functions-anf = A.default-map-visitor.{
         end
           
 
-      inc-count = A.s-assign(l, A.s-name(l, "xoxcx"), A.s-op(l, l, "op+", A.s-id(l, A.s-name(l, "xoxcx")), A.s-num(l, 1)))
-      start-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "sxtxr"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
-      stop-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "sxtxp"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
-
-      addto-acc = A.s-assign(l, A.s-name(l, "dxaxt"), 
-                    A.s-app(l, A.s-dot(l, A.s-id(l, A.s-name(l, "dxaxt")), "append"), 
-                      [list: A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), 
-                          [list: A.s-tuple(l, 
+      fnapp-data = 
+            if json-out:
+              A.s-op(l, l, "op+", A.s-op(l, l, "op+", A.s-str(l, "['"), A.s-app(l, A.s-dot(l, A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), [list: A.s-id(l, A.s-name(l, "sxtxr")), A.s-id(l, A.s-name(l, "sxtxp")),
+                                              A.s-id(l, A.s-name(l, f-id)), 
+                                              A.s-str(l, function-name),
+                                              A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids),
+                                              A.s-id(l, A.s-name(l, "_" + f-id + "__out")),
+                                              if isdotobj:
+                                                A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))
+                                              else:
+                                                A.s-id(l, A.s-name(l, "none"))
+                                              end
+                                      ]), "join-str"), [list: A.s-str(l, "', '")])), A.s-str(l, "']"))
+            else:
+              A.s-tuple(l, 
                               [list:
                                 A.s-id(l, A.s-name(l, "sxtxr")),
                                 A.s-id(l, A.s-name(l, "sxtxp")),
@@ -135,7 +167,18 @@ modify-functions-anf = A.default-map-visitor.{
                                   A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))
                                 else:
                                   A.s-id(l, A.s-name(l, "none"))
-                                end])])]))
+                                end])
+            end
+
+
+      inc-count = A.s-assign(l, A.s-name(l, "xoxcx"), A.s-op(l, l, "op+", A.s-id(l, A.s-name(l, "xoxcx")), A.s-num(l, 1)))
+      start-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "sxtxr"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
+      stop-capture = A.s-let(l, A.s-bind(l, true, A.s-name(l, "sxtxp"), A.a-blank), A.s-id(l, A.s-name(l, "xoxcx")), false)
+
+      addto-acc = A.s-assign(l, A.s-name(l, "dxaxt"), 
+                    A.s-app(l, A.s-dot(l, A.s-id(l, A.s-name(l, "dxaxt")), "append"), 
+                      [list: A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), 
+                          [list: fnapp-data])]))
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-id + "__out"))
 
@@ -180,6 +223,7 @@ modify-functions-anf = A.default-map-visitor.{
   end,
 
   # Remove check statements
+  # TBD: remove list imports, so as to use our shadowed list functions
   method s-program(self, loc, _provide, provided-types, imports, body):
     st = filter(lam(x): 
         cases(A.Expr) x:
@@ -188,27 +232,42 @@ modify-functions-anf = A.default-map-visitor.{
         end
         end, body.stmts)
     
-    A.s-program(loc, _provide.visit(self), provided-types.visit(self), imports.map(_.visit(self)), (A.s-block(loc, st)).visit(self))
+    imports-collected = (imports.map(_.visit(self).tosource().pretty(80).join-str("\n"))).join-str("\n")
+
+    A.s-program(loc, _provide.visit(self), provided-types.visit(self), empty, (A.s-block(loc, st)).visit(self))
   end,
 }
 
 # ------------------------------------------
 
-stud-sub = (C.args).first
+transformed-dir =
+    if json-out:
+      "transformed-json"
+    else:
+      "transformed-arr"
+    end
 
-bpathstr = string-split(stud-sub, "/student-codes/")
+anfdata-dir =
+    if json-out:
+      "json-anf"
+    else:
+      "arr-anf"
+    end
+
+
+bpathstr = string-split(stud-sub, "/cleaning/")
 base = bpathstr.first
 
-file-to-write = string-replace(stud-sub, "student-codes", "transformed")
+file-to-write = string-replace(stud-sub, "cleaning", transformed-dir)
 tpathstr = string-split(file-to-write, "/final-submission/")
 studtrans-dir = tpathstr.first
 studsubflname = tpathstr.last()
 
-stud-dir = string-split(studtrans-dir, "transformed/").last()
+stud-dir = string-split(studtrans-dir, transformed-dir + "/").last()
 
 lists-file = base + "/code-stubs/lists.arr"
 
-transform-dir = base + "/transformed"
+transform-dir = base + "/" + transformed-dir
 when not(FL.exists(transform-dir)):
   FL.create-dir(transform-dir)
 end
@@ -231,11 +290,19 @@ block:
 
   plst = F.input-file(lists-file).read-file()
 
-  toparse = string-replace("provide *" + "\n\n" + string-replace(plst, "#INSERTIMPORTS", "import file as xFx\n\nimport filelib as xFLx\n\nvar dxaxt = empty\n\nvar xoxcx = 0") + "\n\n" + F.input-file(stud-sub).read-file(), "provide *", "")
+  toparse = string-replace("provide *" + "\n\n" + string-replace(plst, "#INSERTIMPORTS", "import file as xFx\n\nimport filelib as xFLx\n\nvar dxaxt = empty\n\nvar xoxcx = 0") + "\n\n" + imports-collected + "\n\n" + F.input-file(stud-sub).read-file(), "provide *", "")
   p = SP.surface-parse(toparse, "test-file.arr")
 
   modified-anf = p.visit(modify-functions-anf)
   as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
+
+
+foutput = 
+  if json-out:
+    '"[" + dxaxt.join-str(", ") + "]"'
+  else:
+    '"provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(studsubflname, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"")'
+  end
 
   tind := 0
   blockstr := ""
@@ -249,7 +316,7 @@ xoxcx := 0
 ``` 
 + "\n\n" + test + "\n\n" +
 
-'xFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(studsubflname, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(studsubflname, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\""))' + "\n\n"
+'xFx.output-file("' + base + "/" + anfdata-dir + "/" + stud-dir + "-" + string-substring(studsubflname, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display(' + foutput + ')' + "\n\n"
 
   end
 
@@ -261,8 +328,8 @@ block:
 ``` 
 + "\n\n" + 
 ```
-when not(xFLx.exists("``` + base + "/anfdata" + ```")):
-xFLx.create-dir("``` + base + "/anfdata" + ```") 
+when not(xFLx.exists("``` + base + "/" + anfdata-dir + ```")):
+xFLx.create-dir("``` + base + "/" + anfdata-dir + ```") 
 end
 ```  
 + "\n\n" + blockstr

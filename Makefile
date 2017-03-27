@@ -16,7 +16,7 @@ pyret = cd $(pyret-base) && gtimeout 2500 node build/phaseA/pyret.jarr \
     --require-config src/scripts/standalone-configA.json
 
 
-everything: transform execute analyze plots
+everything: checkbads filterbads transform #execute analyze plots
 
 clusterplots: transform execute measures
 
@@ -33,12 +33,13 @@ checkbads:
 		node "/Users/np/Projects/Plan Composition/planalysis/bin/cleantest.arr.jarr" "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
 	done
 
+
 cstuds := $(wildcard $(data)/cleaning/*)
 csrcs := $(foreach dir, $(cstuds), $(wildcard $(dir)/final-submission/*.arr))
 cobjs := $(foreach dir, $(cstuds), $(wildcard $(dir)/final-submission/*.arr.jarr))
 
 filterbads:
-	-rm '/Users/np/Projects/Plan Composition/planalysis/data/cleaned-codes/.DS_Store'
+	-rm '/Users/np/Projects/Plan Composition/planalysis/data/cleaning/.DS_Store'
 	for src in $(csrcs) ; do \
 		$(call pyret, "../Plan Composition/planalysis/$$src", "../Plan Composition/planalysis/$$src.jarr") || rm "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
 		node "/Users/np/Projects/Plan Composition/planalysis/$$src.jarr" || rm "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
@@ -46,18 +47,19 @@ filterbads:
 
 
 ccstuds := $(wildcard $(data)/cleaning/*)
-ccsrcs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr))
-ccobjs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr.jarr))
+ccsrcs := $(foreach dir, $(ccstuds), $(wildcard $(dir)/final-submission/earthquake-*.arr))
+ccobjs := $(foreach dir, $(ccstuds), $(wildcard $(dir)/final-submission/earthquake-*.arr.jarr))
 
 transform:
 	-rm '/Users/np/Projects/Plan Composition/planalysis/data/student-codes/.DS_Store'
-	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/transformed'
+	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/transformed-json'
+	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/transformed-arr'
 	$(call pyret, '../Plan Composition/planalysis/src/anf-main.arr', '../Plan Composition/planalysis/bin/anf-main.arr.jarr') 
 	for src in $(ccsrcs) ; do \
-		node "/Users/np/Projects/Plan Composition/planalysis/bin/anf-main.arr.jarr" "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
+		node "/Users/np/Projects/Plan Composition/planalysis/bin/anf-main.arr.jarr" --src "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
 	done
 
-tstuds := $(wildcard $(data)/transformed/*)
+tstuds := $(wildcard $(data)/transformed-json/*)
 tsrcs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr))
 tobjs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr.jarr))
 

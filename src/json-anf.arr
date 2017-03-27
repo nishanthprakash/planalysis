@@ -123,19 +123,18 @@ modify-functions-anf = A.default-map-visitor.{
       addto-acc = A.s-assign(l, A.s-name(l, "dxaxt"), 
                     A.s-app(l, A.s-dot(l, A.s-id(l, A.s-name(l, "dxaxt")), "append"), 
                       [list: A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), 
-                          [list: A.s-tuple(l, 
-                              [list:
-                                A.s-id(l, A.s-name(l, "sxtxr")),
-                                A.s-id(l, A.s-name(l, "sxtxp")),
-                                A.s-id(l, A.s-name(l, f-id)), 
-                                A.s-str(l, function-name),
-                                A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids),
-                                A.s-id(l, A.s-name(l, "_" + f-id + "__out")),
-                                if isdotobj:
-                                  A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))
-                                else:
-                                  A.s-id(l, A.s-name(l, "none"))
-                                end])])]))
+                          [list: A.s-op(l, l, "op+", A.s-op(l, l, "op+", A.s-str(l, "["), A.s-app(l, A.s-dot(l, A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), [list: A.s-id(l, A.s-name(l, "sxtxr")),
+                                              A.s-id(l, A.s-name(l, "sxtxp")),
+                                              A.s-id(l, A.s-name(l, f-id)), 
+                                              A.s-str(l, function-name),
+                                              A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids),
+                                              A.s-id(l, A.s-name(l, "_" + f-id + "__out")),
+                                              if isdotobj:
+                                                A.s-id(l, A.s-name(l, "_" + f-id + "__obj"))
+                                              else:
+                                                A.s-id(l, A.s-name(l, "none"))
+                                              end
+                                      ]), "join-str"), [list: A.s-str(l, ", ")])), A.s-str(l, "]"))])]))
 
       block-out = A.s-id(l, A.s-name(l, "_" + f-id + "__out"))
 
@@ -199,16 +198,16 @@ stud-sub = (C.args).first
 bpathstr = string-split(stud-sub, "/student-codes/")
 base = bpathstr.first
 
-file-to-write = string-replace(stud-sub, "student-codes", "transformed")
+file-to-write = string-replace(stud-sub, "student-codes", "transformed-json")
 tpathstr = string-split(file-to-write, "/final-submission/")
 studtrans-dir = tpathstr.first
 studsubflname = tpathstr.last()
 
-stud-dir = string-split(studtrans-dir, "transformed/").last()
+stud-dir = string-split(studtrans-dir, "transformed-json/").last()
 
 lists-file = base + "/code-stubs/lists.arr"
 
-transform-dir = base + "/transformed"
+transform-dir = base + "/transformed-json"
 when not(FL.exists(transform-dir)):
   FL.create-dir(transform-dir)
 end
@@ -249,7 +248,7 @@ xoxcx := 0
 ``` 
 + "\n\n" + test + "\n\n" +
 
-'xFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(studsubflname, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display("provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(studsubflname, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\""))' + "\n\n"
+'xFx.output-file("' + base + "/anfdata/" + stud-dir + "-" + string-substring(studsubflname, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display(' + '"[" + ' + dxaxt.join-str(", ") + ' + "]"' + ')' + "\n\n"
 
   end
 
