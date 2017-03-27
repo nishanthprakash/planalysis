@@ -223,7 +223,7 @@ modify-functions-anf = A.default-map-visitor.{
   end,
 
   # Remove check statements
-  # TBD: remove list imports, so as to use our shadowed list functions
+  # TBD: take care of import conflicts with student imports and list imports
   method s-program(self, loc, _provide, provided-types, imports, body):
     st = filter(lam(x): 
         cases(A.Expr) x:
@@ -232,7 +232,7 @@ modify-functions-anf = A.default-map-visitor.{
         end
         end, body.stmts)
     
-    imports-collected = (imports.map(_.visit(self).tosource().pretty(80).join-str("\n"))).join-str("\n")
+    #imports-collected = (imports.map(_.visit(self).tosource().pretty(80).join-str("\n"))).join-str("\n")
 
     A.s-program(loc, _provide.visit(self), provided-types.visit(self), empty, (A.s-block(loc, st)).visit(self))
   end,
@@ -290,7 +290,7 @@ block:
 
   plst = F.input-file(lists-file).read-file()
 
-  toparse = string-replace("provide *" + "\n\n" + string-replace(plst, "#INSERTIMPORTS", "import file as xFx\n\nimport filelib as xFLx\n\nvar dxaxt = empty\n\nvar xoxcx = 0") + "\n\n" + imports-collected + "\n\n" + F.input-file(stud-sub).read-file(), "provide *", "")
+  toparse = string-replace("provide *" + "\n\n" + string-replace(plst, "#INSERTIMPORTS", "import file as xFx\n\nimport filelib as xFLx\n\nvar dxaxt = empty\n\nvar xoxcx = 0") + "\n\n" + F.input-file(stud-sub).read-file(), "provide *", "")
   p = SP.surface-parse(toparse, "test-file.arr")
 
   modified-anf = p.visit(modify-functions-anf)
