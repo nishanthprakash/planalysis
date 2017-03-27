@@ -1,10 +1,6 @@
 pyret-base := /Users/np/Projects/pyret-lang
 data := data
 
-studs := $(wildcard $(data)/student-codes/*)
-srcs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr))
-objs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr.jarr))
-
 rebuild:
 	-rm -rf node_modules
 	-rm -rf compiled
@@ -24,6 +20,9 @@ everything: transform execute analyze plots
 
 clusterplots: transform execute measures
 
+studs := $(wildcard $(data)/student-codes/*)
+srcs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr))
+objs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr.jarr))
 
 checkbads:
 	-rm '/Users/np/Projects/Plan Composition/planalysis/data/student-codes/.DS_Store'
@@ -40,20 +39,21 @@ cobjs := $(foreach dir, $(cstuds), $(wildcard $(dir)/final-submission/*.arr.jarr
 
 filterbads:
 	-rm '/Users/np/Projects/Plan Composition/planalysis/data/cleaned-codes/.DS_Store'
-	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/cleaned-codes'
-	mkdir -p '/Users/np/Projects/Plan Composition/planalysis/data/cleaned-codes'
 	for src in $(csrcs) ; do \
-		$(call pyret, "../Plan Composition/planalysis/$$src", "../Plan Composition/planalysis/$$src.jarr") ; \
-		node "/Users/np/Projects/Plan Composition/planalysis/$$src.jarr" && \
-		cp $$src `echo $$src | sed -e "s/cleaning/cleaned-codes/g"` ; \
+		$(call pyret, "../Plan Composition/planalysis/$$src", "../Plan Composition/planalysis/$$src.jarr") || rm "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
+		node "/Users/np/Projects/Plan Composition/planalysis/$$src.jarr" || rm "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
 	done
 
+
+ccstuds := $(wildcard $(data)/cleaning/*)
+ccsrcs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr))
+ccobjs := $(foreach dir, $(studs), $(wildcard $(dir)/final-submission/earthquake-*.arr.jarr))
 
 transform:
 	-rm '/Users/np/Projects/Plan Composition/planalysis/data/student-codes/.DS_Store'
 	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/transformed'
 	$(call pyret, '../Plan Composition/planalysis/src/anf-main.arr', '../Plan Composition/planalysis/bin/anf-main.arr.jarr') 
-	for src in $(srcs) ; do \
+	for src in $(ccsrcs) ; do \
 		node "/Users/np/Projects/Plan Composition/planalysis/bin/anf-main.arr.jarr" "/Users/np/Projects/Plan Composition/planalysis/$$src" ; \
 	done
 
