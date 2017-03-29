@@ -64,7 +64,7 @@ tsrcs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr))
 tobjs := $(foreach dir, $(tstuds), $(wildcard $(dir)/final-submission/*.arr.jarr))
 
 execute:
-	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/anfdata'
+	-rm -rf '/Users/np/Projects/Plan Composition/planalysis/data/json-anf'
 	for src in $(tsrcs) ; do \
 		$(call pyret, "../Plan Composition/planalysis/$$src", "../Plan Composition/planalysis/$$src.jarr") ; \
 		node "/Users/np/Projects/Plan Composition/planalysis/$$src.jarr" ; \

@@ -2,7 +2,7 @@ import ast as A
 import parse-pyret as SP
 import file as F
 import filelib as FL
-import file('../data/tests/anf-checks.arr') as anf-checks
+import file('../data/tests/json-anf-checks.arr') as anf-checks
 import cmdline as C
 import string-dict as D
 
@@ -83,6 +83,8 @@ modify-functions-anf = A.default-map-visitor.{
       # Besides, more importantly, the args need to be eval'd only once (incase they have side effects)
       # got to collect the output too, there is no way to torepr the in-out anf tuple before execution
 
+      # TBD: desugaring of _ in expression position
+
       let-args := args.foldr(
         lam(x, y):
           cases(List) y:
@@ -143,7 +145,9 @@ modify-functions-anf = A.default-map-visitor.{
 
       fnapp-data = 
             if json-out:
-              A.s-op(l, l, "op+", A.s-op(l, l, "op+", A.s-str(l, "['"), A.s-app(l, A.s-dot(l, A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), [list: A.s-id(l, A.s-name(l, "sxtxr")), A.s-id(l, A.s-name(l, "sxtxp")),
+              A.s-op(l, l, "op+", A.s-op(l, l, "op+", A.s-str(l, '["'), A.s-app(l, A.s-dot(l, A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), [list:
+                                              A.s-id(l, A.s-name(l, "sxtxr")),  # start
+                                              A.s-id(l, A.s-name(l, "sxtxp")),  # stop
                                               A.s-id(l, A.s-name(l, f-id)), 
                                               A.s-str(l, function-name),
                                               A.s-construct(l, A.s-construct-normal, A.s-id(l, A.s-name(l, "list")), list-argids),
@@ -153,7 +157,7 @@ modify-functions-anf = A.default-map-visitor.{
                                               else:
                                                 A.s-id(l, A.s-name(l, "none"))
                                               end
-                                      ]), "join-str"), [list: A.s-str(l, "', '")])), A.s-str(l, "']"))
+                                      ]), "join-str"), [list: A.s-str(l, '", "')])), A.s-str(l, '"]'))
             else:
               A.s-tuple(l, 
                               [list:
@@ -234,7 +238,7 @@ modify-functions-anf = A.default-map-visitor.{
     
     #imports-collected = (imports.map(_.visit(self).tosource().pretty(80).join-str("\n"))).join-str("\n")
 
-    A.s-program(loc, _provide.visit(self), provided-types.visit(self), empty, (A.s-block(loc, st)).visit(self))
+    A.s-program(loc, _provide.visit(self), provided-types.visit(self), imports.map(_.visit(self)), (A.s-block(loc, st)).visit(self))
   end,
 }
 
@@ -297,12 +301,20 @@ block:
   as-string-anf = modified-anf.tosource().pretty(80).join-str("\n")
 
 
-foutput = 
-  if json-out:
-    '"[" + dxaxt.join-str(", ") + "]"'
-  else:
-    '"provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(studsubflname, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"")'
-  end
+  foutput = 
+    if json-out:
+      '"[" + dxaxt.join-str(", ") + "]"'
+    else:
+      '"provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(studsubflname, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"")'
+    end
+
+  foutext = 
+    if json-out:
+      ".json"
+    else:
+      ".arr"
+    end
+
 
   tind := 0
   blockstr := ""
@@ -316,7 +328,7 @@ xoxcx := 0
 ``` 
 + "\n\n" + test + "\n\n" +
 
-'xFx.output-file("' + base + "/" + anfdata-dir + "/" + stud-dir + "-" + string-substring(studsubflname, 11, 12) + "_" + num-to-string(tind) + ".arr" + '", false).display(' + foutput + ')' + "\n\n"
+'xFx.output-file("' + base + "/" + anfdata-dir + "/" + stud-dir + "-" + string-substring(studsubflname, 11, 12) + "_" + num-to-string(tind) + foutext + '", false).display(' + foutput + ')' + "\n\n"
 
   end
 
