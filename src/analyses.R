@@ -85,7 +85,7 @@ visualize <- function(finalfns, path){
   axis(1, at=i1,labels=i2, pos=-1, las=2)
   axis(2, at=j,labels=j, pos=-1, las=2)
   
-  par(xpd=TRUE, cex=0.8)
+  par(xpd=TRUE, cex=0.4)
   legend("top",legend=lapply(fs, function(x) as.character(x)), col=fcols, pch=15, pt.cex=5,  horiz=TRUE)
   
   clip(-1, length(j), -1, length(j))
@@ -101,106 +101,62 @@ visualize <- function(finalfns, path){
   dev.off()
 }
 
+stats <- function(start, end){
+  countint = length(start)
+  startend = end - start
+  center = (end + start)/2
+  
+  startmean = mean(start)
+  endmean = mean(end)
+  lengthmean = mean(startend)
+  centermean = mean(center)
+  
+  startdev = sd(start)
+  enddev = sd(end)
+  lengthdev = sd(startend)
+  centerdev = sd(center)
+  
+  startsk = skewness(start)
+  endsk = skewness(end)
+  lengthsk = skewness(startend)
+  centersk = skewness(center)
+  
+  startku = kurtosis(start)
+  endku = kurtosis(end)
+  lengthku = kurtosis(startend)
+  centerku = kurtosis(center)
+  
+  return(c(startmean, endmean, lengthmean, centermean, startdev, enddev, lengthdev, centerdev, 
+           startsk, endsk, lengthsk, centersk, startku, endku, lengthku, centerku))
+}
+
 clustering <- function(disj, path){
-  m = NULL
-  maxints = 0
-  for(i in names(disj)){ 
-    maxints = if (maxints < length(disj[[i]][1:2][,1])) length(disj[[i]][1:2][,1]) else maxints
-  }
+  
+  n = vector("list", length = 5)
   for(i in names(disj)){
-    disjel = as.numeric(as.vector(t(disj[[i]][1:2]))) - 1
-    disjel = disjel/tail(disjel, n=1)
-    m = rbind(m, c(disjel, rep(1, 2*maxints - length(disjel))))
-  }
-  png(paste(path, "int", ".png", sep=""), width=12,height=6,units="in", res=800)
-  row.names(m) = names(disj)
-  plot.new()
-  plot(hclust(dist(m)))
-  dev.off()
-  
-  n0 = NULL
-  n1 = NULL
-  n2 = NULL
-  n3 = NULL
-  n4 = NULL
-  for(i in names(disj)){
-    maxpos = as.numeric(as.vector(tail(disj[[i]], n=1)[[2]])) - 1
-    disj[[i]] = (data.frame(lapply(lapply(disj[[i]][1:2], as.vector), as.numeric)) - 1)/maxpos
+    st = stats(as.numeric(disj[[i]][[1]]),as.numeric(disj[[i]][[2]]))
     
-    countint = length(disj[[i]][[1]])
-    startend = disj[[i]][[2]] - disj[[i]][[1]]
-    center = (disj[[i]][[2]] + disj[[i]][[1]])/2
-    
-    startmean = mean(disj[[i]][[1]])
-    endmean = mean(disj[[i]][[2]])
-    lengthmean = mean(startend)
-    centermean = mean(center)
-    
-    startdev = sd(disj[[i]][[1]])
-    enddev = sd(disj[[i]][[2]])
-    lengthdev = sd(startend)
-    centerdev = sd(center)
-    
-    startsk = skewness(disj[[i]][[1]])
-    endsk = skewness(disj[[i]][[2]])
-    lengthsk = skewness(startend)
-    centersk = skewness(center)
-    
-    startku = kurtosis(disj[[i]][[1]])
-    endku = kurtosis(disj[[i]][[2]])
-    lengthku = kurtosis(startend)
-    centerku = kurtosis(center)
-    
-    n0 = rbind(n0, c(startmean, endmean, lengthmean, centermean, startdev, enddev, lengthdev, centerdev, startsk, endsk, lengthsk, centersk, startku, endku, lengthku, centerku))
-    n1 = rbind(n1, c(startmean, endmean, lengthmean, startdev, enddev, lengthdev, startsk, endsk, lengthsk, startku, endku, lengthku))
-    n2 = rbind(n2, c(startmean, endmean, lengthmean, startdev, enddev, lengthdev, startsk, endsk, lengthsk))
-    n3 = rbind(n3, c(startmean, endmean, lengthmean, startdev, enddev, lengthdev))
-    n4 = rbind(n4, countint)
+    n[[1]] = rbind(n[[1]], st)
+    n[[2]] = rbind(n[[2]], st[c(-4, -8, -12, -16)])
+    n[[3]] = rbind(n[[3]], st[c(-4, -8, -12:-16)])
+    n[[4]] = rbind(n[[4]], st[c(-4, -8:-16)])
+    n[[5]] = rbind(n[[5]], countint)
   }
   
-  row.names(n0) = names(disj)
-  row.names(n1) = names(disj)
-  row.names(n2) = names(disj)
-  row.names(n3) = names(disj)
-  row.names(n4) = names(disj)
-  
-  n0 = n0[complete.cases(n0),]
-  n1 = n1[complete.cases(n1),]
-  n2 = n2[complete.cases(n2),]
-  n3 = n3[complete.cases(n3),]
-  n4 = n4[complete.cases(n4),]
-  
-  png(paste(path, "stat0",".png", sep=""), width=12,height=6,units="in", res=800)
-  plot.new()
-  par(xpd=TRUE, cex=0.8)
-  plot(hclust(dist(n0)))
-  dev.off()
-  
-  png(paste(path, "stat1", ".png", sep=""), width=12,height=6,units="in", res=800)
-  plot.new()
-  plot(hclust(dist(n1)))
-  dev.off()
-  
-  png(paste(path, "stat2", ".png", sep=""), width=12,height=6,units="in", res=800)
-  plot.new()
-  plot(hclust(dist(n2)))
-  dev.off()
-  
-  png(paste(path, "stat3", ".png", sep=""), width=12,height=6,units="in", res=800)
-  plot.new()
-  plot(hclust(dist(n3)))
-  dev.off()
-  
-  png(paste(path, "stat4", ".png", sep=""), width=12,height=6,units="in", res=800)
-  plot.new()
-  plot(hclust(dist(n4)))
-  dev.off()
-  
+  for(i in 1:5){
+    row.names(n[[i]]) = names(disj)
+    n[[i]] = (n[[i]])[complete.cases(n[i]),]
+    png(paste(path, "stat", i,".png", sep=""), width=12,height=6,units="in", res=800)
+    plot.new()
+    par(xpd=TRUE, cex=80/length(disj))
+    plot(hclust(dist(n[[i]])))
+    dev.off()
+  }
   
   # The final magnifica:
   png(paste(path, "ulti", ".png", sep=""), width=12,height=6,units="in", res=800)
   plot.new()
-  plot(hclust(sqrt(dist(n4)^2 + dist(n3)^2)))
+  plot(hclust(sqrt(dist(n[[3]])^2 + dist(n[[4]])^2)))
   dev.off()
 }
 
@@ -211,6 +167,8 @@ main <- function() {
   dir.create(file.path('.', 'plots3/order'), showWarnings = FALSE)  
   dir.create(file.path('.', 'plots3/FAC'), showWarnings = FALSE)
   dir.create(file.path('.', 'plots3/AFC'), showWarnings = FALSE)  
+  dir.create(file.path('.', 'plots3/NFAC'), showWarnings = FALSE)
+  dir.create(file.path('.', 'plots3/NAFC'), showWarnings = FALSE) 
   
   tsubs = list.files(path = "./json-anf/")
   subs = unique(lapply(tsubs, function (i) strsplit(i, "[.]")[[1]][1]))
@@ -218,7 +176,6 @@ main <- function() {
   disj = list()
   
   for (sub in subs){
-    #sub = "66-1_1"
     js = read_json(paste('./json-anf/', sub, '.arr', sep = ''))
     dt = data.table(t(sapply(js, unlist)))
     dt[, c(3, 5:7):=NULL]
@@ -237,9 +194,22 @@ main <- function() {
   df = data.frame(do.call(rbind.data.frame, disj))
   allfns = split(df, f=df[3])
   clustering(allfns, "./plots3/AFC/")
+  ndisj = list()
+  n2disj = list()
+  
+  for(i in names(disj)){
+    maxpos = as.numeric(as.vector(tail(disj[[i]], n=1)[[2]])) - 1
+    ndisj[[i]] = (data.frame(lapply(lapply(disj[[i]][1:2], as.vector), as.numeric)) - 1)/maxpos
+  }
+  for(i in names(disj)){
+    n2disj[[i]] = cbind(ndisj[[i]], disj[[i]][3])
+  }
+  clustering(ndisj, "./plots3/NFAC/")
+  
+  dfr = data.frame(do.call(rbind.data.frame, n2disj))
+  allfns = split(dfr, f=dfr[3])
+  clustering(allfns, "./plots3/NAFC/")  
+  
 }
 
 main()
-#if(!interactive()) {
-#  main()
-#}
