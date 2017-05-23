@@ -6,6 +6,7 @@ import file('../data/tests/json-anf-checks.arr') as anf-checks
 import cmdline as C
 import string-dict as D
 
+# TBD import both small test for pyret anf and big test for json anf and select based on cmdline flag
 
 options = [D.string-dict:
   "p",
@@ -303,7 +304,7 @@ block:
 
   foutput = 
     if json-out:
-      '"[" + dxaxt.join-str(", ") + "]"'
+      '"[" + dxaxt.join-str(",\\n") + "]"'
     else:
       '"provide * \\n\\n' + datadefs + '\\n\\ndat = " + string-replace(torepr({' + stud-dir + '; ' + string-replace(string-replace(studsubflname, ".arr", ""), "earthquake-", "") + '; dxaxt}), "<function>", "\\\"<function>\\\"")'
     end

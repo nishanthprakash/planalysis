@@ -74,6 +74,10 @@ anafs := $(foreach file, $(notdir $(wildcard $(data)/anfdata/*.arr)), $(subst .a
 anas := $(sort $(foreach fstr, $(anafs), $(word 1, $(subst _, , $(fstr)))))
 tests := $(sort $(foreach fstr, $(anafs), $(word 2, $(subst _, , $(fstr)))))
 
+
+
+#------------- older -----------
+
 analyze: distances measures
 
 distances:

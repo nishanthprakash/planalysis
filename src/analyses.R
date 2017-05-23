@@ -1,5 +1,6 @@
 library(jsonlite)
 library(data.table)
+library(moments)
 
 get_recfns <- function(studfns){
   c3 = as.vector(studfns[3])
@@ -62,7 +63,7 @@ get_recfns <- function(studfns){
 visualize <- function(finalfns, path){
   png(path, width=12,height=12,units="in", res=1000)
 
-  par(cex=0.5, mar=c(12,3,3,5))
+  par(cex=0.2, mar=c(12,3,3,5))
   c13 = finalfns[, c(1, 3)]
   c23 = finalfns[, c(2, 3)]
   names(c13) = names(c23)
@@ -82,10 +83,12 @@ visualize <- function(finalfns, path){
   
   plot.new()
   plot.window(xlim = range(j), ylim = range(j))
-  axis(1, at=i1,labels=i2, pos=-1, las=2)
-  axis(2, at=j,labels=j, pos=-1, las=2)
   
-  par(xpd=TRUE, cex=0.4)
+  
+  axis(1, at=i1,labels=i2, pos=-1, las=2,cex.axis=0.5)
+  axis(2, at=j,labels=j, pos=-1, las=2, cex.axis=0.5)
+  
+  par(xpd=TRUE, cex=0.7)
   legend("top",legend=lapply(fs, function(x) as.character(x)), col=fcols, pch=15, pt.cex=5,  horiz=TRUE)
   
   clip(-1, length(j), -1, length(j))
@@ -127,7 +130,7 @@ stats <- function(start, end){
   centerku = kurtosis(center)
   
   return(c(startmean, endmean, lengthmean, centermean, startdev, enddev, lengthdev, centerdev, 
-           startsk, endsk, lengthsk, centersk, startku, endku, lengthku, centerku))
+           startsk, endsk, lengthsk, centersk, startku, endku, lengthku, centerku, countint))
 }
 
 clustering <- function(disj, path){
@@ -136,11 +139,11 @@ clustering <- function(disj, path){
   for(i in names(disj)){
     st = stats(as.numeric(disj[[i]][[1]]),as.numeric(disj[[i]][[2]]))
     
-    n[[1]] = rbind(n[[1]], st)
-    n[[2]] = rbind(n[[2]], st[c(-4, -8, -12, -16)])
-    n[[3]] = rbind(n[[3]], st[c(-4, -8, -12:-16)])
-    n[[4]] = rbind(n[[4]], st[c(-4, -8:-16)])
-    n[[5]] = rbind(n[[5]], countint)
+    n[[1]] = rbind(n[[1]], st[c(-17)])
+    n[[2]] = rbind(n[[2]], st[c(-4, -8, -12, -16:-17)])
+    n[[3]] = rbind(n[[3]], st[c(-4, -8, -12:-17)])
+    n[[4]] = rbind(n[[4]], st[c(-4, -8:-17)])
+    n[[5]] = rbind(n[[5]], st[c(17)])
   }
   
   for(i in 1:5){
@@ -148,7 +151,7 @@ clustering <- function(disj, path){
     n[[i]] = (n[[i]])[complete.cases(n[i]),]
     png(paste(path, "stat", i,".png", sep=""), width=12,height=6,units="in", res=800)
     plot.new()
-    par(xpd=TRUE, cex=80/length(disj))
+    par(xpd=TRUE, cex=75/length(disj))
     plot(hclust(dist(n[[i]])))
     dev.off()
   }
@@ -176,7 +179,7 @@ main <- function() {
   disj = list()
   
   for (sub in subs){
-    js = read_json(paste('./json-anf/', sub, '.arr', sep = ''))
+    js = read_json(paste('./json-anf/', sub, '.json', sep = ''))
     dt = data.table(t(sapply(js, unlist)))
     dt[, c(3, 5:7):=NULL]
     ss = strsplit(sub, "[_]")[[1]][1]
@@ -186,16 +189,18 @@ main <- function() {
     studfns = studfns[order(as.character(studfns[, 3]), as.numeric(as.character(studfns[, 1]))), ]
     
     recfns = get_recfns(studfns)
-    #visualize(recfns, paste("./plots3/order/", sub, ".png", sep=""))
+    visualize(recfns, paste("./plots3/order/", sub, ".png", sep=""))
     
     disj[[sub]] = data.frame(cbind(as.numeric(as.vector(recfns[, 1])), as.vector(recfns[, 2]), as.character(as.vector(recfns[, 3]))))
   }
-  clustering(disj, "./plots3/FAC/")
+  clustering(disj, "./plots3/FAC/") # function agnostic plan clustering
   df = data.frame(do.call(rbind.data.frame, disj))
   allfns = split(df, f=df[3])
-  clustering(allfns, "./plots3/AFC/")
+  clustering(allfns, "./plots3/AFC/") # functions clustering
   ndisj = list()
   n2disj = list()
+  
+  # Normalize lengths w.r.t length of the program (length in terms of fun enter and exit steps)
   
   for(i in names(disj)){
     maxpos = as.numeric(as.vector(tail(disj[[i]], n=1)[[2]])) - 1
