@@ -2,4 +2,5 @@
 bin
 src/sdistances.arr
 src/smeasures.arr
+data
 *.jarr

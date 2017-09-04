@@ -16,7 +16,7 @@ pyret = cd $(pyret-base) && gtimeout 2500 node build/phaseA/pyret.jarr \
     --require-config src/scripts/standalone-configA.json
 
 
-everything: checkbads filterbads transform #execute analyze plots
+everything: checkbads filterbads transform execute #analyze plots
 
 clusterplots: transform execute measures
 

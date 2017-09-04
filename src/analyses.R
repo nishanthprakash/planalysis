@@ -6,33 +6,23 @@ get_recfns <- function(studfns){
   c3 = as.vector(studfns[3])
   fs = unique(c3)
   fs = data.frame(fs)
-  for (i in 1:nrow(fs)){ fs[i,2] = FALSE}
+  fs[, 2] = 0
+  fs[, 3] = 0
   
   rownames(fs) = fs[, 1]
-  fs[, 1] = NULL
+  fs[, 1] = FALSE
   
-  prevfn = ""
-  prevstart = 0
-  prevend = 0
-  rec = FALSE
   for(i in 1:nrow(studfns)){
-    if(as.character(studfns[i,3]) == prevfn && !rec){
-      if (prevstart < as.numeric(as.character(studfns[i,1])) && as.numeric(as.character(studfns[i,2])) < prevend){
-        rec = TRUE
-      }
-    } else {
-      if (as.character(studfns[i, 3]) != prevfn && prevfn != ""){
-        fs[as.character(prevfn), 1] = rec
-        prevfn = ""
-        prevstart = 0
-        prevend = 0
-        rec = FALSE
+    if(!fs[as.character(studfns[i,3]), 1]){
+      if(fs[as.character(studfns[i,3]), 2]==0 && fs[as.character(studfns[i,3]), 3]==0){
+        fs[as.character(studfns[i,3]), 2] = as.numeric(as.character(studfns[i,1]))
+        fs[as.character(studfns[i,3]), 3] = as.numeric(as.character(studfns[i,2]))
+      } else{
+        if(fs[as.character(studfns[i,3]), 2] < as.numeric(as.character(studfns[i,1])) && as.numeric(as.character(studfns[i,2])) < fs[as.character(studfns[i,3]), 3]){
+          fs[as.character(studfns[i,3]), 1] = TRUE
+        }
       }
     }
-    fs[as.character(prevfn), 1] = rec
-    prevfn = as.character(studfns[i, 3])
-    prevstart = as.numeric(as.character(studfns[i,1]))
-    prevend = as.numeric(as.character(studfns[i,2]))
   }
   
   studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
