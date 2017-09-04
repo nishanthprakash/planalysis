@@ -60,6 +60,64 @@ get_recfns <- function(studfns){
   return(finalfns)
 }
 
+get_toplevels <- function(studfns) {
+  c3 = as.vector(studfns[3])
+  fs = unique(c3)
+  fs = data.frame(fs)
+  for (i in 1:nrow(fs)){ fs[i,2] = FALSE}
+  
+  rownames(fs) = fs[, 1]
+  fs[, 1] = NULL
+  
+  prevfn = ""
+  prevstart = 0
+  prevend = 0
+  rec = FALSE
+  for(i in 1:nrow(studfns)){
+    if(as.character(studfns[i,3]) == prevfn && !rec){
+      if (prevstart < as.numeric(as.character(studfns[i,1])) && as.numeric(as.character(studfns[i,2])) < prevend){
+        rec = TRUE
+      }
+    } else {
+      if (as.character(studfns[i, 3]) != prevfn && prevfn != ""){
+        fs[as.character(prevfn), 1] = rec
+        prevfn = ""
+        prevstart = 0
+        prevend = 0
+        rec = FALSE
+      }
+    }
+    fs[as.character(prevfn), 1] = rec
+    prevfn = as.character(studfns[i, 3])
+    prevstart = as.numeric(as.character(studfns[i,1]))
+    prevend = as.numeric(as.character(studfns[i,2]))
+  }
+  
+  studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
+  
+  c13 = cbind(studfns[, c(1, 3)], 1:nrow(studfns[, c(1, 3)]))
+  c23 = cbind(studfns[, c(2, 3)], 1:nrow(studfns[, c(1, 3)]))
+  names(c13) = names(c23)
+  fnpos = rbind(c13, c23)
+  fnpos = fnpos[order(as.numeric(as.character(fnpos[,1]))), ]
+  
+  for(i in 1:nrow(fnpos)){
+    if (!fs[as.character(fnpos[i, 2]), 1]){
+      fnpos[-(1:i), 1] = as.numeric(as.character(fnpos[-(1:i), 1])) - 1
+    }
+  }
+  recinds = fs[as.character(fnpos[, 2]), 1]
+  recfns = fnpos[recinds, ]
+  
+  for(i in 1:nrow(recfns)){
+    recfns[i, 4] = as.numeric(as.character(recfns[recfns[, 3] == recfns[i, 3], ][2, 1]))
+  }
+  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2)]
+  finalfns = finalfns[order(as.numeric(as.character(finalfns[,1]))), ]
+  
+  return(finalfns)
+}
+
 visualize <- function(finalfns, path){
   png(path, width=12,height=12,units="in", res=1000)
 
@@ -149,7 +207,7 @@ clustering <- function(disj, path){
   for(i in 1:5){
     row.names(n[[i]]) = names(disj)
     n[[i]] = (n[[i]])[complete.cases(n[i]),]
-    png(paste(path, "stat", i,".png", sep=""), width=12,height=6,units="in", res=800)
+    png(paste(path, "/stat", i,".png", sep=""), width=12,height=6,units="in", res=800)
     plot.new()
     par(xpd=TRUE, cex=75/length(disj))
     plot(hclust(dist(n[[i]])))
@@ -157,46 +215,17 @@ clustering <- function(disj, path){
   }
   
   # The final magnifica:
-  png(paste(path, "ulti", ".png", sep=""), width=12,height=6,units="in", res=800)
+  png(paste(path, "/ulti", ".png", sep=""), width=12,height=6,units="in", res=800)
   plot.new()
   plot(hclust(sqrt(dist(n[[3]])^2 + dist(n[[4]])^2)))
   dev.off()
 }
 
-main <- function() {
-  setwd("~/Projects/Plan Composition/planalysis/data")
-  unlink(file.path('.', 'plots3'), recursive = TRUE, force = FALSE)
-  dir.create(file.path('.', 'plots3'), showWarnings = FALSE)
-  dir.create(file.path('.', 'plots3/order'), showWarnings = FALSE)  
-  dir.create(file.path('.', 'plots3/FAC'), showWarnings = FALSE)
-  dir.create(file.path('.', 'plots3/AFC'), showWarnings = FALSE)  
-  dir.create(file.path('.', 'plots3/NFAC'), showWarnings = FALSE)
-  dir.create(file.path('.', 'plots3/NAFC'), showWarnings = FALSE) 
-  
-  tsubs = list.files(path = "./json-anf/")
-  subs = unique(lapply(tsubs, function (i) strsplit(i, "[.]")[[1]][1]))
-  
-  disj = list()
-  
-  for (sub in subs){
-    js = read_json(paste('./json-anf/', sub, '.json', sep = ''))
-    dt = data.table(t(sapply(js, unlist)))
-    dt[, c(3, 5:7):=NULL]
-    ss = strsplit(sub, "[_]")[[1]][1]
-    studfnscsv = as.data.frame.matrix(dt)
-    studfns1 = data.frame(cbind(studfnscsv[[1]], studfnscsv[[2]], paste(ss, "-", studfnscsv[[3]], sep = "")))
-    studfns = data.frame(lapply(studfns1, function(x) {gsub("-_", "-", x)}))
-    studfns = studfns[order(as.character(studfns[, 3]), as.numeric(as.character(studfns[, 1]))), ]
-    
-    recfns = get_recfns(studfns)
-    visualize(recfns, paste("./plots3/order/", sub, ".png", sep=""))
-    
-    disj[[sub]] = data.frame(cbind(as.numeric(as.vector(recfns[, 1])), as.vector(recfns[, 2]), as.character(as.vector(recfns[, 3]))))
-  }
-  clustering(disj, "./plots3/FAC/") # function agnostic plan clustering
+dendros <- function(disj, outfolder){
+  clustering(disj, file.path('.', outfolder, "FAC/")) # function agnostic plan clustering
   df = data.frame(do.call(rbind.data.frame, disj))
   allfns = split(df, f=df[3])
-  clustering(allfns, "./plots3/AFC/") # functions clustering
+  clustering(allfns, file.path('.', outfolder, "AFC")) # functions clustering
   ndisj = list()
   n2disj = list()
   
@@ -209,12 +238,48 @@ main <- function() {
   for(i in names(disj)){
     n2disj[[i]] = cbind(ndisj[[i]], disj[[i]][3])
   }
-  clustering(ndisj, "./plots3/NFAC/")
+  clustering(ndisj, file.path('.', outfolder, "NFAC"))
   
   dfr = data.frame(do.call(rbind.data.frame, n2disj))
   allfns = split(dfr, f=dfr[3])
-  clustering(allfns, "./plots3/NAFC/")  
-  
+  clustering(allfns, file.path('.', outfolder, "NAFC"))  
 }
 
-main()
+setup_folders <- function(outfolder) {
+  unlink(file.path('.', outfolder), recursive = TRUE, force = FALSE)
+  dir.create(file.path('.', outfolder), showWarnings = FALSE)
+  dir.create(file.path('.', outfolder, 'order'), showWarnings = FALSE)  
+  dir.create(file.path('.', outfolder, 'FAC'), showWarnings = FALSE)
+  dir.create(file.path('.', outfolder, 'AFC'), showWarnings = FALSE)  
+  dir.create(file.path('.', outfolder, 'NFAC'), showWarnings = FALSE)
+  dir.create(file.path('.', outfolder, 'NAFC'), showWarnings = FALSE)   
+}
+
+main <- function(outfolder) {
+  setwd("~/Projects/Plan Composition/planalysis/data")
+  setup_folders(outfolder)
+  
+  tsubs = list.files(path = "./json-anf/")
+  subs = unique(lapply(tsubs, function (i) strsplit(i, "[.]")[[1]][1]))
+  
+  disj = list()
+  for (sub in subs){
+    js = read_json(file.path('.', 'json-anf', paste(sub, '.json', sep='')))
+    dt = data.table(t(sapply(js, unlist)))
+    dt[, c(3, 5:7):=NULL]
+    ss = strsplit(sub, "[_]")[[1]][1]
+    studfnscsv = as.data.frame.matrix(dt)
+    studfns1 = data.frame(cbind(studfnscsv[[1]], studfnscsv[[2]], paste(ss, "-", studfnscsv[[3]], sep = "")))
+    studfns = data.frame(lapply(studfns1, function(x) {gsub("-_", "-", x)}))
+    studfns = studfns[order(as.character(studfns[, 3]), as.numeric(as.character(studfns[, 1]))), ]
+    
+    recfns = get_recfns(studfns)
+    #visualize(recfns, file.path('.', outfolder, "order", paste(sub, ".png", sep="")))
+
+    disj[[sub]] = data.frame(cbind(as.numeric(as.vector(recfns[, 1])), as.vector(recfns[, 2]), as.character(as.vector(recfns[, 3]))))
+  }
+
+  dendros(disj, outfolder)
+}
+
+main("plots4")
