@@ -1,11 +1,86 @@
 library(jsonlite)
 library(data.table)
 library(moments)
+library(stringdist)
+
+del_adjust <-function(studfns, fs) {
+  studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
+  
+  c13 = cbind(studfns[, c(1, 3)], 1:nrow(studfns[, c(1, 3)]))
+  c23 = cbind(studfns[, c(2, 3)], 1:nrow(studfns[, c(1, 3)]))
+  names(c13) = names(c23)
+  fnpos = rbind(c13, c23)
+  fnpos = fnpos[order(as.numeric(as.character(fnpos[,1]))), ]
+  
+  for(i in 1:nrow(fnpos)){
+    if (!fs[as.character(fnpos[i, 2]), 1]){
+      fnpos[-(1:i), 1] = as.numeric(as.character(fnpos[-(1:i), 1])) - 1
+    }
+  }
+  recinds = fs[as.character(fnpos[, 2]), 1]
+  recfns = fnpos[recinds, ]
+  
+  for(i in 1:nrow(recfns)){
+    recfns[i, 4] = as.numeric(as.character(recfns[recfns[, 3] == recfns[i, 3], ][2, 1]))
+  }
+  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2)]
+  finalfns = finalfns[order(as.numeric(as.character(finalfns[,1]))), ]
+  
+  return(finalfns)  
+}
+
+del_inner_adjust <-function(studfns) {
+  studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
+  
+  c13 = cbind(studfns[, c(1, 3)], 1:nrow(studfns[, c(1, 3)]))
+  c23 = cbind(studfns[, c(2, 3)], 1:nrow(studfns[, c(1, 3)]))
+  names(c13) = names(c23)
+  fnpos = rbind(c13, c23)
+  fnpos = fnpos[order(as.numeric(as.character(fnpos[,1]))), ]
+
+  setnames(fnpos, c("X1", "X2", "row"))
+  
+  i = 1
+  curfn = as.character(fnpos[i, 2])
+  curfn_start = as.numeric(as.character(fnpos[i, 1]))
+  rownum = which(fnpos$row==fnpos[i, 3])
+  curfn_end = as.numeric(as.character(fnpos[rownum[2], 1]))
+  inds = c()
+  for(i in 1:nrow(fnpos)) {
+    if(as.character(fnpos[i,2]) != curfn) {
+      if(as.numeric(as.character(fnpos[i,1])) > curfn_end) {
+        curfn = as.character(fnpos[i, 2])
+        curfn_start = as.numeric(as.character(fnpos[i, 1]))
+        rownum = which(fnpos$row==fnpos[i, 3])
+        curfn_end = as.numeric(as.character(fnpos[rownum[2], 1]))
+      }
+      else {
+        fnpos[-(1:i), 1] = as.numeric(as.character(fnpos[-(1:i), 1])) - 1
+        curfn_end = curfn_end - 1
+        inds = c(inds, which(fnpos$row==fnpos[i, 3]))
+      }
+    }
+  }
+  
+  if(!is.null(inds)){
+    recfns = fnpos[-inds, ]  
+  } else {
+    recfns = fnpos
+  }
+  
+  for(i in 1:nrow(recfns)){
+    recfns[i, 4] = as.numeric(as.character(recfns[recfns[, 3] == recfns[i, 3], ][2, 1]))
+  }
+  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2)]
+  finalfns = finalfns[order(as.numeric(as.character(finalfns[,1]))), ]
+  
+  return(finalfns)  
+}
 
 get_recfns <- function(studfns){
-  c3 = as.vector(studfns[3])
-  fs = unique(c3)
-  fs = data.frame(fs)
+  studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
+  
+  fs = data.frame(unique(as.vector(studfns[3])))
   fs[, 2] = 0
   fs[, 3] = 0
   
@@ -25,87 +100,34 @@ get_recfns <- function(studfns){
     }
   }
   
-  studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
-  
-  c13 = cbind(studfns[, c(1, 3)], 1:nrow(studfns[, c(1, 3)]))
-  c23 = cbind(studfns[, c(2, 3)], 1:nrow(studfns[, c(1, 3)]))
-  names(c13) = names(c23)
-  fnpos = rbind(c13, c23)
-  fnpos = fnpos[order(as.numeric(as.character(fnpos[,1]))), ]
-  
-  for(i in 1:nrow(fnpos)){
-    if (!fs[as.character(fnpos[i, 2]), 1]){
-      fnpos[-(1:i), 1] = as.numeric(as.character(fnpos[-(1:i), 1])) - 1
-    }
-  }
-  recinds = fs[as.character(fnpos[, 2]), 1]
-  recfns = fnpos[recinds, ]
-  
-  for(i in 1:nrow(recfns)){
-    recfns[i, 4] = as.numeric(as.character(recfns[recfns[, 3] == recfns[i, 3], ][2, 1]))
-  }
-  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2)]
-  finalfns = finalfns[order(as.numeric(as.character(finalfns[,1]))), ]
-  
-  return(finalfns)
+  return(del_adjust(studfns, fs))
 }
 
-get_toplevels <- function(studfns) {
-  c3 = as.vector(studfns[3])
-  fs = unique(c3)
-  fs = data.frame(fs)
-  for (i in 1:nrow(fs)){ fs[i,2] = FALSE}
-  
-  rownames(fs) = fs[, 1]
-  fs[, 1] = NULL
-  
-  prevfn = ""
-  prevstart = 0
-  prevend = 0
-  rec = FALSE
-  for(i in 1:nrow(studfns)){
-    if(as.character(studfns[i,3]) == prevfn && !rec){
-      if (prevstart < as.numeric(as.character(studfns[i,1])) && as.numeric(as.character(studfns[i,2])) < prevend){
-        rec = TRUE
-      }
-    } else {
-      if (as.character(studfns[i, 3]) != prevfn && prevfn != ""){
-        fs[as.character(prevfn), 1] = rec
-        prevfn = ""
-        prevstart = 0
-        prevend = 0
-        rec = FALSE
-      }
-    }
-    fs[as.character(prevfn), 1] = rec
-    prevfn = as.character(studfns[i, 3])
-    prevstart = as.numeric(as.character(studfns[i,1]))
-    prevend = as.numeric(as.character(studfns[i,2]))
-  }
-  
+get_toplevel_recs <- function(studfns, ss) {
   studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
   
-  c13 = cbind(studfns[, c(1, 3)], 1:nrow(studfns[, c(1, 3)]))
-  c23 = cbind(studfns[, c(2, 3)], 1:nrow(studfns[, c(1, 3)]))
-  names(c13) = names(c23)
-  fnpos = rbind(c13, c23)
-  fnpos = fnpos[order(as.numeric(as.character(fnpos[,1]))), ]
+  fs = data.frame(unique(as.vector(studfns[3])))
   
-  for(i in 1:nrow(fnpos)){
-    if (!fs[as.character(fnpos[i, 2]), 1]){
-      fnpos[-(1:i), 1] = as.numeric(as.character(fnpos[-(1:i), 1])) - 1
-    }
+  rownames(fs) = fs[, 1]
+  fs[, 1] = FALSE
+
+  setnames(studfns, c("X1", "X2", "X3"))
+  
+  i=which(studfns$X1==1)
+  while(length(i)!=0) {
+    fs[as.character(studfns[i,3]), 1] = TRUE
+    i = which(studfns$X1==as.numeric(as.character(studfns[i,2]))+1)
   }
-  recinds = fs[as.character(fnpos[, 2]), 1]
-  recfns = fnpos[recinds, ]
-  
-  for(i in 1:nrow(recfns)){
-    recfns[i, 4] = as.numeric(as.character(recfns[recfns[, 3] == recfns[i, 3], ][2, 1]))
+
+  mainfn = paste("^", ss, "-daily-max-for-month$", sep="")
+  if(Reduce("|", grepl(mainfn, row.names(fs)))) { 
+    #if recursion starts with outermost fn., then its single traversal
+    fs[, 1] = grepl(mainfn, row.names(fs))
   }
-  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2)]
-  finalfns = finalfns[order(as.numeric(as.character(finalfns[,1]))), ]
   
-  return(finalfns)
+  tmpfns = del_adjust(studfns, fs)
+  
+  return(del_inner_adjust(tmpfns))
 }
 
 visualize <- function(finalfns, path){
@@ -245,15 +267,62 @@ setup_folders <- function(outfolder) {
   dir.create(file.path('.', outfolder, 'NAFC'), showWarnings = FALSE)   
 }
 
+get_recstring <- function(studfns) {
+  n = nrow(studfns)
+  recstr = vector(mode="character", length=2*n)
+  for(i in 1:n) {
+    recstr[as.numeric(as.character(studfns[i,1]))] = '['
+    recstr[as.numeric(as.character(studfns[i,2]))] = ']'
+  }
+  return(paste(recstr, sep="", collapse=""))
+}
+
+{
+# normalize_plans <- function(studfns) {
+#   maxlen = max(nchar(plan_table[,1]))
+# 
+#   for(i in 1:nrow(studfns)) {
+#     curlen = nchar(plan_table[1,1])
+#     fac = maxlen/curlen
+#     tails = unlist(gregexpr("\\[\\]", plan_table[1,1]))
+#     heads = unlist(gregexpr("\\]\\[", plan_table[1,1]))
+#     retails = round(fac * tails)
+#     reheads = round(fac * heads)
+#     
+#     normstr = vector(mode="character", length=maxlen)
+#     opens = 0
+#     opening = TRUE
+#     for(i in 1:maxlen) {
+#       if(opening){
+#         if(is.na(match(i, tails))) {
+#           
+#         } else {
+#           normstr[i] = "["
+#           opens = opens + 1
+#         }
+#       } else {
+#         normstr = "]"
+#       }
+#     }
+#   }
+#   
+# }
+}
+
 main <- function(outfolder) {
   setwd("~/Projects/Plan Composition/planalysis/data")
   setup_folders(outfolder)
   
   tsubs = list.files(path = "./json-anf/")
-  subs = unique(lapply(tsubs, function (i) strsplit(i, "[.]")[[1]][1]))
+  subs <<- unique(lapply(tsubs, function (i) strsplit(i, "[.]")[[1]][1]))
   
   disj = list()
+  toprecstrs = list()
+  cluster_num = 0
+  plan_map = list()
+  #subs = list("10-1_1", "10-2_1", "3-1_1", "2-1_1")
   for (sub in subs){
+    #sub = "3-2_1"
     js = read_json(file.path('.', 'json-anf', paste(sub, '.json', sep='')))
     dt = data.table(t(sapply(js, unlist)))
     dt[, c(3, 5:7):=NULL]
@@ -264,12 +333,38 @@ main <- function(outfolder) {
     studfns = studfns[order(as.character(studfns[, 3]), as.numeric(as.character(studfns[, 1]))), ]
     
     recfns = get_recfns(studfns)
-    #visualize(recfns, file.path('.', outfolder, "order", paste(sub, ".png", sep="")))
+    #visualize(recfns, file.path('.', outfolder, "order", paste(sub, "l1.png", sep="")))
 
-    disj[[sub]] = data.frame(cbind(as.numeric(as.vector(recfns[, 1])), as.vector(recfns[, 2]), as.character(as.vector(recfns[, 3]))))
+    toprecfns = get_toplevel_recs(recfns, ss)
+    visualize(toprecfns, file.path('.', outfolder, "order", paste(sub, "l2.png", sep="")))
+    
+    toprecstring = get_recstring(toprecfns)    
+    if(!is.null(toprecstrs[[toprecstring]])){
+      plan_map[[sub]] = c(toprecstring, toprecstrs[[toprecstring]])
+    } else {
+      cluster_num = cluster_num + 1
+      toprecstrs[[toprecstring]] = cluster_num
+      plan_map[[sub]] = c(toprecstring, cluster_num)
+    }
+    print(sub)
+    disj[[sub]] = data.frame(cbind(as.numeric(as.vector(toprecfns[, 1])), as.vector(toprecfns[, 2]), as.character(as.vector(toprecfns[, 3]))))
+    #break
   }
+  plan_table <<- t(data.frame(plan_map))
+  png(paste("./", outfolder, "/clusters1",".png", sep=""), width=12,height=6,units="in", res=800)
+  plot.new()
+  par(xpd=TRUE, cex=0.5)
+  ds <<- stringdistmatrix(unlist(plan_table[, 1]), method='lv')
+  attr(ds, "Labels") <<- unlist(subs)
+  plot(hclust(ds))
+  dev.off()
+  
+  num_recs = str_count(plan_table[,1],"\\[\\]")
+  names(num_recs) = row.names(plan_table)
+  plan_table2 <<- cbind(plan_table, num_recs)
+  write.csv(file=file.path('.', outfolder, "result1.csv"), x=plan_table2)
 
   dendros(disj, outfolder)
 }
 
-main("plots4")
+main("plots6")
