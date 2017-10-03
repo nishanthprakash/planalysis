@@ -326,6 +326,7 @@ main <- function(outfolder) {
     js = read_json(file.path('.', 'json-anf', paste(sub, '.json', sep='')))
     dt = data.table(t(sapply(js, unlist)))
     dt[, c(3, 5:7):=NULL]
+    #lapply(dt[,6], function(x) {paste(c(Filter(function (f) {as.numeric(charToRaw(f)) < 58 && as.numeric(charToRaw(f)) > 47}, unlist(strsplit(x, "")))),collapse="")})
     ss = strsplit(sub, "[_]")[[1]][1]
     studfnscsv = as.data.frame.matrix(dt)
     studfns1 = data.frame(cbind(studfnscsv[[1]], studfnscsv[[2]], paste(ss, "-", studfnscsv[[3]], sep = "")))
@@ -367,4 +368,4 @@ main <- function(outfolder) {
   dendros(disj, outfolder)
 }
 
-main("plots6")
+main("plots7")
