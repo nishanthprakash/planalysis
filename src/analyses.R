@@ -2,12 +2,16 @@ library(jsonlite)
 library(data.table)
 library(moments)
 library(stringdist)
+library(stringr)
 
 del_adjust <-function(studfns, fs) {
   studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
   
   c13 = cbind(studfns[, c(1, 3)], 1:nrow(studfns[, c(1, 3)]))
   c23 = cbind(studfns[, c(2, 3)], 1:nrow(studfns[, c(1, 3)]))
+  
+  c456 = cbind(studfns[, c(4, 5, 6)], 1:nrow(studfns[, c(1, 3)]))
+  
   names(c13) = names(c23)
   fnpos = rbind(c13, c23)
   fnpos = fnpos[order(as.numeric(as.character(fnpos[,1]))), ]
@@ -18,12 +22,15 @@ del_adjust <-function(studfns, fs) {
     }
   }
   recinds = fs[as.character(fnpos[, 2]), 1]
-  recfns = fnpos[recinds, ]
+  recfns = fnpos[recinds, ] #deletes non recursive functions
   
   for(i in 1:nrow(recfns)){
     recfns[i, 4] = as.numeric(as.character(recfns[recfns[, 3] == recfns[i, 3], ][2, 1]))
+    recfns[i, 5] = c456[recfns[i, 3] == c456[, 4], 1]
+    recfns[i, 6] = c456[recfns[i, 3] == c456[, 4], 2]
+    recfns[i, 7] = c456[recfns[i, 3] == c456[, 4], 3]
   }
-  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2)]
+  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2, 5, 6, 7)]
   finalfns = finalfns[order(as.numeric(as.character(finalfns[,1]))), ]
   
   return(finalfns)  
@@ -34,6 +41,9 @@ del_inner_adjust <-function(studfns) {
   
   c13 = cbind(studfns[, c(1, 3)], 1:nrow(studfns[, c(1, 3)]))
   c23 = cbind(studfns[, c(2, 3)], 1:nrow(studfns[, c(1, 3)]))
+  
+  c456 = cbind(studfns[, c(4, 5, 6)], 1:nrow(studfns[, c(1, 3)]))
+  
   names(c13) = names(c23)
   fnpos = rbind(c13, c23)
   fnpos = fnpos[order(as.numeric(as.character(fnpos[,1]))), ]
@@ -70,8 +80,11 @@ del_inner_adjust <-function(studfns) {
   
   for(i in 1:nrow(recfns)){
     recfns[i, 4] = as.numeric(as.character(recfns[recfns[, 3] == recfns[i, 3], ][2, 1]))
+    recfns[i, 5] = c456[recfns[i, 3] == c456[, 4], 1]
+    recfns[i, 6] = c456[recfns[i, 3] == c456[, 4], 2]
+    recfns[i, 7] = c456[recfns[i, 3] == c456[, 4], 3]
   }
-  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2)]
+  finalfns = (recfns[recfns[, 1] != recfns[, 4], ])[, c(1, 4, 2, 5, 6, 7)]
   finalfns = finalfns[order(as.numeric(as.character(finalfns[,1]))), ]
   
   return(finalfns)  
@@ -111,7 +124,7 @@ get_toplevel_recs <- function(studfns, ss) {
   rownames(fs) = fs[, 1]
   fs[, 1] = FALSE
 
-  setnames(studfns, c("X1", "X2", "X3"))
+  setnames(studfns, c("X1", "X2", "X3", "X4", "X5", "X6"))
   
   i=which(studfns$X1==1)
   while(length(i)!=0) {
@@ -260,11 +273,11 @@ dendros <- function(disj, outfolder){
 setup_folders <- function(outfolder) {
   unlink(file.path('.', outfolder), recursive = TRUE, force = FALSE)
   dir.create(file.path('.', outfolder), showWarnings = FALSE)
-  dir.create(file.path('.', outfolder, 'order'), showWarnings = FALSE)  
-  dir.create(file.path('.', outfolder, 'FAC'), showWarnings = FALSE)
-  dir.create(file.path('.', outfolder, 'AFC'), showWarnings = FALSE)  
-  dir.create(file.path('.', outfolder, 'NFAC'), showWarnings = FALSE)
-  dir.create(file.path('.', outfolder, 'NAFC'), showWarnings = FALSE)   
+  #dir.create(file.path('.', outfolder, 'order'), showWarnings = FALSE)  
+  #dir.create(file.path('.', outfolder, 'FAC'), showWarnings = FALSE)
+  #dir.create(file.path('.', outfolder, 'AFC'), showWarnings = FALSE)  
+  #dir.create(file.path('.', outfolder, 'NFAC'), showWarnings = FALSE)
+  #dir.create(file.path('.', outfolder, 'NAFC'), showWarnings = FALSE)   
 }
 
 get_recstring <- function(studfns) {
@@ -309,6 +322,103 @@ get_recstring <- function(studfns) {
 # }
 }
 
+recpar_split <- function(strn){
+  if(strn == "") return(strn)
+  charvec = strsplit(strn, "")[[1]]
+  
+  startpos = 1
+  endpos = c()
+  parcount = 0
+  bracount = 0
+  flocount = 0
+  for( i in 1:length(charvec)){
+    if (charvec[i] == ","){
+      if(parcount == 0 && bracount == 0 && flocount == 0){
+        spos = if(charvec[i+1] == " ") i+2 else 1+1
+        startpos = c(startpos, spos)
+        endpos = c(endpos, i-1)
+      }
+    } else if(charvec[i] == "("){
+      parcount = parcount+1
+    } else if(charvec[i] == ")"){
+      parcount = parcount-1
+    } else if(charvec[i] == "["){
+      bracount = bracount+1
+    } else if(charvec[i] == "]"){
+      bracount = bracount-1
+    } else if(charvec[i] == "{"){
+      flocount = flocount+1
+    } else if(charvec[i] == "}"){
+      flocount = flocount-1
+    }
+  }
+  endpos = c(endpos, nchar(strn))
+  
+  splits = substring(strn, startpos, endpos)
+  splits = splits[!grepl("<function>", splits)]
+  
+  return(splits)
+}
+
+
+rem_list_pref <- function(str){
+  if(substring(str, 1, 7) == "[list: "){
+    str = substring(str, 8, nchar(str) - 1)
+  }
+  return(str)
+}
+
+get_in_out_top_strucs <- function(toprecfns){
+  #first fn applications
+  #firstapps = toprecfns[match(unique(toprecfns[, 3]), toprecfns[, 3]),]
+  inds = c()
+  i=which(toprecfns[, 1]==1)
+  while(length(i)!=0) {
+    inds = c(inds, i)
+    i = which(toprecfns[, 1]==as.numeric(as.character(toprecfns[i, 2]))+1)
+  }
+  firstapps = toprecfns[inds,]
+  
+  fn_strucs = c()
+  for(i in 1:nrow(firstapps)){
+    input = as.character(firstapps[i, 4])
+    output = as.character(firstapps[i, 5])
+    obj = as.character(firstapps[i, 6])
+    
+    #input params structure
+    input = rem_list_pref(input)
+    arg_list = recpar_split(input) #strsplit(input, '(?:\\([^)]*,|\\[[^]]*,)(*SKIP)(*FAIL)|,\\s*', perl=TRUE)[[1]]
+
+    nin = c()
+    for(j in arg_list){
+      j = rem_list_pref(j)
+      nin = c(nin, length(recpar_split(j))) #strsplit(j, '(?:\\([^)]*,|\\[[^]]*,)(*SKIP)(*FAIL)|,\\s*', perl=TRUE)[[1]]))
+    }
+    if(length(arg_list)==0 ){
+      max_nin = 0
+      instr = ""
+    } else {
+      max_nin = max(nin)
+      instr = arg_list[which.max(nin)]
+    }
+    nobj = length(recpar_split(rem_list_pref(obj)))
+    
+    if(max_nin < nobj){
+      ninp = nobj 
+      inpstr = obj
+    } else {
+      ninp = max_nin
+      inpstr = instr
+    }
+    
+    nout = length(recpar_split(rem_list_pref(output))) #strsplit(output, '(?:\\([^)]*,|\\[[^]]*,)(*SKIP)(*FAIL)|,\\s*', perl=TRUE)[[1]])
+    outstr = output
+    fn_strucs = rbind(fn_strucs, cbind(as.character(firstapps[i, 3]), ninp, nout, inpstr, outstr)) #paste(nin, collapse = ', ')
+  }
+  
+  return(fn_strucs)
+}
+
 main <- function(outfolder) {
   setwd("~/Projects/Plan Composition/planalysis/data")
   setup_folders(outfolder)
@@ -316,20 +426,24 @@ main <- function(outfolder) {
   tsubs = list.files(path = "./json-anf/")
   subs <<- unique(lapply(tsubs, function (i) strsplit(i, "[.]")[[1]][1]))
   
+  tstrucs <<- c()
   disj = list()
+  compos <<- list()
   toprecstrs = list()
   cluster_num = 0
   plan_map = list()
-  #subs = list("10-1_1", "10-2_1", "3-1_1", "2-1_1")
+  #subs = list("14-1_1", "14-2_1", "56-2_1", "57-1_1")
+  #subs = list("12-2_1")
   for (sub in subs){
     #sub = "3-2_1"
     js = read_json(file.path('.', 'json-anf', paste(sub, '.json', sep='')))
     dt = data.table(t(sapply(js, unlist)))
-    dt[, c(3, 5:7):=NULL]
+    #dt[, c(3, 5:7):=NULL]
+    dt = dt[, c(1, 2, 4, 5, 6, 7, 3)]
     #lapply(dt[,6], function(x) {paste(c(Filter(function (f) {as.numeric(charToRaw(f)) < 58 && as.numeric(charToRaw(f)) > 47}, unlist(strsplit(x, "")))),collapse="")})
     ss = strsplit(sub, "[_]")[[1]][1]
     studfnscsv = as.data.frame.matrix(dt)
-    studfns1 = data.frame(cbind(studfnscsv[[1]], studfnscsv[[2]], paste(ss, "-", studfnscsv[[3]], sep = "")))
+    studfns1 = data.frame(cbind(studfnscsv[[1]], studfnscsv[[2]], paste(ss, "-", studfnscsv[[3]], sep = ""), studfnscsv[[4]], studfnscsv[[5]], studfnscsv[[6]]))
     studfns = data.frame(lapply(studfns1, function(x) {gsub("-_", "-", x)}))
     studfns = studfns[order(as.character(studfns[, 3]), as.numeric(as.character(studfns[, 1]))), ]
     
@@ -337,9 +451,13 @@ main <- function(outfolder) {
     #visualize(recfns, file.path('.', outfolder, "order", paste(sub, "l1.png", sep="")))
 
     toprecfns = get_toplevel_recs(recfns, ss)
-    visualize(toprecfns, file.path('.', outfolder, "order", paste(sub, "l2.png", sep="")))
+    #visualize(toprecfns, file.path('.', outfolder, "order", paste(sub, "l2.png", sep="")))
     
-    toprecstring = get_recstring(toprecfns)    
+    top_strucs = get_in_out_top_strucs(toprecfns)
+    compos[[sub]] <<- top_strucs
+    tstrucs <<- rbind(tstrucs, top_strucs)
+    
+    toprecstring = get_recstring(toprecfns) 
     if(!is.null(toprecstrs[[toprecstring]])){
       plan_map[[sub]] = c(toprecstring, toprecstrs[[toprecstring]])
     } else {
@@ -348,24 +466,64 @@ main <- function(outfolder) {
       plan_map[[sub]] = c(toprecstring, cluster_num)
     }
     print(sub)
+    
     disj[[sub]] = data.frame(cbind(as.numeric(as.vector(toprecfns[, 1])), as.vector(toprecfns[, 2]), as.character(as.vector(toprecfns[, 3]))))
     #break
   }
-  plan_table <<- t(data.frame(plan_map))
-  png(paste("./", outfolder, "/clusters1",".png", sep=""), width=12,height=6,units="in", res=800)
+  plan_table <<- as.data.frame(t(data.frame(plan_map)))
+  setnames(plan_table, c("recursion_str", "exact_recursion_structure"))
+  #png(paste("./", outfolder, "/clusters1",".png", sep=""), width=12,height=6,units="in", res=800)
+  #plot.new()
+  #par(xpd=TRUE, cex=0.5)
+  #ds <<- stringdistmatrix(unlist(plan_table[, 1]), method='lv')
+  #attr(ds, "Labels") <<- unlist(subs)
+  #plot(hclust(ds))
+  #dev.off()
+  
+  png(paste("./", outfolder, "/func_clusters",".png", sep=""), width=12,height=6,units="in", res=800)
   plot.new()
-  par(xpd=TRUE, cex=0.5)
-  ds <<- stringdistmatrix(unlist(plan_table[, 1]), method='lv')
-  attr(ds, "Labels") <<- unlist(subs)
-  plot(hclust(ds))
+  par(xpd=TRUE, cex=0.2)
+  vals = cbind(as.numeric(tstrucs[, 2]), as.numeric(tstrucs[, 3]))
+  row.names(vals) = tstrucs[, 1]
+  fclusts <<- hclust(dist(vals))
+  plot(fclusts)
   dev.off()
   
+  clus_num = 0
+  complans <<- list()
+  plan_nums = list()
+  fcs = cutree(fclusts, h=5)
+  for(sub in subs){
+    cmps = c()
+    for(i in 1:nrow(compos[[sub]])){
+      cmps = c(cmps, fcs[[compos[[sub]][i]]])
+    }
+    
+    planstr_sorted = paste(sort(cmps, decreasing=TRUE), collapse = ",")
+    planstr = paste(cmps, collapse = ",")
+    if(!is.null(plan_nums[[planstr_sorted]])){
+      complans[[sub]] <<- c(planstr, plan_nums[[planstr_sorted]])
+    } else {
+      clus_num = clus_num + 1
+      plan_nums[[planstr_sorted]] = clus_num
+      complans[[sub]] <<- c(planstr, clus_num)
+    } 
+  }
+
   num_recs = str_count(plan_table[,1],"\\[\\]")
   names(num_recs) = row.names(plan_table)
-  plan_table2 <<- cbind(plan_table, num_recs)
-  write.csv(file=file.path('.', outfolder, "result1.csv"), x=plan_table2)
+  plan_table2 <<- as.data.frame(cbind(plan_table, num_recs))
+  plancomps = as.data.frame(t(as.data.frame(complans)))
+  setnames(plancomps, c("fn_comp", "comp_cluster"))
+  plan_table3 <<-merge(plan_table2, plancomps, by='row.names', all=TRUE)
+  #fn_cls <<- merge(as.data.frame(vals), as.data.frame(fcs), by='row.names', all=TRUE)
+  #write.csv(file=file.path('.', outfolder, "result1.csv"), x=plan_table2)
+  #write.csv(file=file.path('.', outfolder, "strucs.csv"), x=tstrucs)
+  fn_cls = as.data.frame(cbind(tstrucs, as.data.frame(fcs)))
+  write.csv(file=file.path('.', outfolder, "results.csv"), x=plan_table3)
+  write.csv(file=file.path('.', outfolder, "funcs.csv"), x=fn_cls)
 
-  dendros(disj, outfolder)
+  #dendros(disj, outfolder)
 }
 
-main("plots7")
+main("plots12")
