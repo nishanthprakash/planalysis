@@ -7,3 +7,5 @@ data/*
 !data/coding
 !data/tests
 *.jarr
+.ipynb_checkpoints
+.Rhistory
