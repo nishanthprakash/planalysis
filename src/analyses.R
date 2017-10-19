@@ -3,6 +3,7 @@ library(data.table)
 library(moments)
 library(stringdist)
 library(stringr)
+library(googleVis)
 
 del_adjust <-function(studfns, fs) {
   studfns = studfns[order(as.numeric(as.character(studfns[, 1]))), ]
@@ -516,6 +517,9 @@ main <- function(outfolder) {
   plancomps = as.data.frame(t(as.data.frame(complans)))
   setnames(plancomps, c("fn_comp", "comp_cluster"))
   plan_table3 <<-merge(plan_table2, plancomps, by='row.names', all=TRUE)
+  plan_table3[, 1] = substring(lapply(strsplit(plan_table3[,1], "[_]"), function(x) {x[1]}), first = 2)
+  rownames(plan_table3) = plan_table3[, 1]
+  plan_table3 = plan_table3[, -1]
   #fn_cls <<- merge(as.data.frame(vals), as.data.frame(fcs), by='row.names', all=TRUE)
   #write.csv(file=file.path('.', outfolder, "result1.csv"), x=plan_table2)
   #write.csv(file=file.path('.', outfolder, "strucs.csv"), x=tstrucs)
@@ -523,7 +527,22 @@ main <- function(outfolder) {
   write.csv(file=file.path('.', outfolder, "results.csv"), x=plan_table3)
   write.csv(file=file.path('.', outfolder, "funcs.csv"), x=fn_cls)
 
+  gold <- read.csv(file="./coding/gold.csv", header=TRUE, row.names = 3, sep=",")
+  cluster_compare <<- merge(plan_table3['comp_cluster'], gold['Cluster_level1'], by='row.names')
+
+  cluster_compare[1] = lapply(cluster_compare[1], function(x) {paste("sub-", x, sep = "")})
+  cluster_compare["comp_cluster"] = lapply(cluster_compare["comp_cluster"], function(x) {paste("c-", x, sep = "")})
+  cluster_compare["Cluster_level1"] = lapply(cluster_compare["Cluster_level1"], function(x) {paste("gold-", x, sep = "")})
+
+  From = c(as.vector( unlist(cluster_compare["Cluster_level1"])), as.vector(unlist(cluster_compare[1])))
+  To = c(as.vector( unlist(cluster_compare["comp_cluster"])), as.vector(unlist(cluster_compare["Cluster_level1"])))
+  sank <<- data.frame(From, To, weights = array(1, c(nrow(From), 1)))
+  
+  ccompare <<- data.frame(From = cluster_compare["Cluster_level1"], To=cluster_compare["comp_cluster"], weights = array(1, c(nrow(cluster_compare), 1)))
+  plot(gvisSankey(ccompare, from="From", to="To", weight="weights", options = list(height = 1800, width = 1200, sankey="node:{nodePadding:5}")))
+  plot(gvisSankey(sank, from="From", to="To", weight="weights", options = list(height = 1800, width = 1200, sankey="node:{nodePadding:5}")))
+  
   #dendros(disj, outfolder)
 }
 
-main("plots12")
+main("plots13")
